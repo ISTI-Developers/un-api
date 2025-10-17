@@ -26,14 +26,14 @@ app.get("/", (_, res) => {
 
 if (CONFIG.NODE_ENV === "production") {
   const privateKey = fs.readFileSync(
-    "/etc/letsencrypt/live/ooh.unmg.com.ph/privkey.pem",
+    "/etc/letsencrypt/live/api.unmg.com.ph/privkey.pem",
     "utf8"
   );
   const certificate = fs.readFileSync(
-    "/etc/letsencrypt/live/ooh.unmg.com.ph/fullchain.pem",
+    "/etc/letsencrypt/live/api.unmg.com.ph/fullchain.pem",
     "utf8"
   );
-  
+
   const credentials = {
     key: privateKey,
     cert: certificate,
