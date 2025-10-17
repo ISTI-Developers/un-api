@@ -30,18 +30,13 @@ if (CONFIG.NODE_ENV === "production") {
     "utf8"
   );
   const certificate = fs.readFileSync(
-    "/etc/letsencrypt/live/ooh.unmg.com.ph/cert.pem",
+    "/etc/letsencrypt/live/ooh.unmg.com.ph/fullchain.pem",
     "utf8"
   );
-  const ca = fs.readFileSync(
-    "/etc/letsencrypt/live/ooh.unmg.com.ph/chain.pem",
-    "utf8"
-  );
-
+  
   const credentials = {
     key: privateKey,
     cert: certificate,
-    ca: ca,
   };
   const httpsServer = https.createServer(credentials, app);
   httpsServer.listen(CONFIG.PORT, () => {
