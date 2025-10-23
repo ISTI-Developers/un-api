@@ -108,7 +108,10 @@ CASE
 
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
-      if (!imageIDs.image) send(res).error("No images found for" + site, 204);
+      if (imageIDs.image === null) {
+        send(res).error("No images found for" + site, 204);
+        return;
+      }
 
       const IDs = imageIDs.image.split(",").map((img) => img.trim());
 
