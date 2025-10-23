@@ -5,4 +5,8 @@ const router = express.Router();
 
 router.get("/available", UnisController.getAvailableSites);
 
+router.get("/images/:site", UnisController.getSiteImages);
+
+router.get("/areas", UnisController.getAreas);
+
 export const UnisRoute = router;

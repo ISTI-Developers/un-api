@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { MySQL } from "../config/db";
 import { send } from "../utils/helper";
+import { ResultSetHeader } from "mysql2";
 
 const db = new MySQL({
   host: "192.168.10.10",
@@ -8,6 +9,10 @@ const db = new MySQL({
   password: "Oams@UN",
   database: "oams-un",
 });
+
+interface SiteImages extends ResultSetHeader {
+  image: string;
+}
 
 export const UnisController = {
   async getAvailableSites(req: Request, res: Response) {
@@ -80,5 +85,50 @@ CASE
                         
                         ORDER BY division_id ASC, structure ASC, site ASC`);
     send(res).ok(rows);
+  },
+
+  async getSiteImages(req: Request, res: Response) {
+    const site = req.params.site;
+
+    if (!site) send(res).error("No site code found.");
+
+    let [structure, segment]: string[] = site!.split("-");
+
+    if (!structure || !segment) send(res).error("No site code found.");
+
+    segment = structure === "3D" ? undefined : segment;
+
+    let query =
+      "SELECT image FROM (SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, ss.image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code LIKE ?) A ";
+    const params: string[] = [`${structure}%`];
+    if (segment) {
+      query = query + " WHERE segment_code = ?";
+      params.push(segment);
+    }
+
+    const [imageIDs] = await db.query<SiteImages>(query, params);
+    if (imageIDs) {
+      if (!imageIDs.image) send(res).error("No images found for" + site, 204);
+
+      const IDs = imageIDs.image.split(",").map((img) => img.trim());
+
+      query = `SELECT * FROM hd_file_upload WHERE upload_id IN (${IDs.join(
+        ","
+      )}) AND upload_path NOT LIKE ? ORDER BY date_uploaded;`;
+
+      const imageLinks = await db.query(query, [`${structure}%`]);
+
+      send(res).ok(imageLinks);
+    } else {
+      send(res).ok("No images found for" + site);
+    }
+  },
+
+  async getAreas(_: Request, res: Response) {
+    const response = await db.query(
+      "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;"
+    );
+
+    send(res).ok(response);
   },
 };

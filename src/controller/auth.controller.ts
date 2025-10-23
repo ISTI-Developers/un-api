@@ -1,10 +1,12 @@
+import { ResultSetHeader } from "mysql2";
+import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import { MySQL } from "../config/db";
 import { LoginCredentials, RegisterCredentials } from "../utils/types";
 import { MWC } from "./middleware.controller";
 import { send } from "../utils/helper";
 import { hashPassword } from "../utils/security";
-import { ResultSetHeader } from "mysql2";
+import crypto from "crypto";
 
 const db = new MySQL();
 
@@ -56,10 +58,31 @@ export const AuthController = {
         "INSERT INTO un_accounts (user_id, username, email, password, role_id) VALUES (?,?,?,?,?)",
         [newId, data.username, data.email_address, password, data.role_id]
       );
-
-      
     } else {
       send(res).error("An error has occured during user creation");
     }
+  },
+  async generateKey(_: Request, res: Response) {
+    const rawKey = crypto.randomBytes(32).toString("hex");
+
+    send(res).ok({ key: rawKey });
+  },
+  async saveKey(req: Request, res: Response) {
+    const data = req.body;
+
+    const hash = await bcrypt.hash(data.key, 10);
+
+    const sql = `INSERT INTO keys (key, label, date_generated,expiration) VALUES (?,?,?,?)`;
+
+    const [response] = await db.query<ResultSetHeader>(sql, [
+      hash,
+      data.label,
+      data.date_generated,
+      data.expiration,
+    ]);
+
+    if (!response) send(res).error("An error occured");
+
+    send(res).ok({ key: data.key });
   },
 };
