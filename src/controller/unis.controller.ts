@@ -108,22 +108,36 @@ CASE
 
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
-      if (imageIDs.image === null) {
-        send(res).error("No images found for" + site, 204);
+      if (!imageIDs.image) {
+        send(res).error("No images found for " + site, 204);
         return;
       }
 
-      const IDs = imageIDs.image.split(",").map((img) => img.trim());
+      const IDs = imageIDs.image
+        .split(",")
+        .map((img: string) => img.trim())
+        .filter(Boolean); // remove empty values
 
-      query = `SELECT * FROM hd_file_upload WHERE upload_id IN (${IDs.join(
-        ","
-      )}) AND upload_path NOT LIKE ? ORDER BY date_uploaded;`;
+      if (IDs.length === 0) {
+        send(res).error("No valid image IDs found for " + site, 204);
+        return;
+      }
 
-      const imageLinks = await db.query(query, [`${structure}%`]);
+      // Generate placeholders safely (e.g., ?, ?, ?)
+      const placeholders = IDs.map(() => "?").join(",");
+      const query = `
+    SELECT * 
+    FROM hd_file_upload 
+    WHERE upload_id IN (${placeholders})
+      AND upload_path NOT LIKE ?
+    ORDER BY date_uploaded;
+  `;
 
+      const params = [...IDs, `${structure}%`];
+      const imageLinks = await db.query(query, params);
       send(res).ok(imageLinks);
     } else {
-      send(res).ok("No images found for" + site);
+      send(res).ok("No images found for " + site);
     }
   },
 
