@@ -5,6 +5,8 @@ const router = express.Router();
 
 router.get("/available", UnisController.getAvailableSites);
 
+router.get("/latest", UnisController.getLatestSites);
+
 router.get("/images/:site", UnisController.getSiteImages);
 
 router.get("/areas", UnisController.getAreas);

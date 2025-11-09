@@ -15,7 +15,7 @@ interface SiteImages extends ResultSetHeader {
 }
 
 export const UnisController = {
-  async getAvailableSites(req: Request, res: Response) {
+  async getAvailableSites(_: Request, res: Response) {
     const rows =
       await db.query(`SELECT structure, site, category, product, client, address, date_from, CASE WHEN addendum_type = 5 OR special_instruction LIKE "%preterm%" OR special_instruction LIKE "%pre-term%" THEN effectivity_date ELSE end_date END as end_date, net_contract_amount, payment_term_id, 
 CASE
@@ -85,6 +85,23 @@ CASE
                         
                         ORDER BY division_id ASC, structure ASC, site ASC`);
     send(res).ok(rows);
+  },
+
+  async getLatestSites(req: Request, res: Response) {
+    const date = req.query.date;
+
+    const response = await db.query(
+      `SELECT s.structure_id, s.structure_code, COALESCE(CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')),CONCAT(s.structure_code,'-','XXXXX')) as site_code, ac.city_name as city, ad.division_name as region, s.address, ss.latitude, ss.longitude, sc.category as site_owner, CONCAT(s.structure_height," x ", s.structure_width) as size, s.vicinity_population, s.traffic_count,ss.facing as board_facing, s.traffic as bound, COALESCE(COALESCE(ss.date_modified, ss.date_created), s.date_created) as date_created FROM hd_structure s 
+LEFT JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id 
+LEFT JOIN hd_structure_status st ON s.status_id = st.status_id 
+JOIN hd_ad_city ac ON s.city_id = ac.city_id
+JOIN hd_ad_division ad ON s.division_id = ad.division_id
+JOIN hd_structure_category sc ON s.category_id = sc.category_id
+WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) ORDER BY s.structure_id DESC;`,
+      [date]
+    );
+
+    send(res).ok(response);
   },
 
   async getSiteImages(req: Request, res: Response) {
