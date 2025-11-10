@@ -116,8 +116,16 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
     segment = structure === "3D" ? undefined : segment;
 
     let query =
-      "SELECT image FROM (SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, ss.image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code LIKE ?) A ";
-    const params: string[] = [`${structure}%`];
+      "SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, ss.image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
+
+    if (structure === "3D") {
+      query = query + " LIKE ?";
+    } else {
+      query = query + " = ?";
+    }
+    query = `SELECT image FROM (${query}) A `;
+    console.log(query)
+    const params: string[] = [structure!];
     if (segment) {
       query = query + " WHERE segment_code = ?";
       params.push(segment);
