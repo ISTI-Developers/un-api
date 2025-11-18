@@ -219,7 +219,6 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       query = query + " = ?";
     }
     query = `SELECT image FROM (${query}) A `;
-    console.log(query);
     const params: string[] = [structure!];
     if (segment) {
       query = query + " WHERE segment_code = ?";
