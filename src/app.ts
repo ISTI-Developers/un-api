@@ -6,6 +6,8 @@ import * as https from "https";
 import { CONFIG } from "./config/config";
 import { UserRoute } from "./routes/users.route";
 import { UnisRoute } from "./routes/unis.route";
+import { NotificationRoute } from "./routes/notification.route";
+import { CompanyRoute } from "./routes/company.route";
 const app = express();
 
 const PORT = CONFIG.PORT || 8001;
@@ -18,7 +20,9 @@ app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 app.use("/users", UserRoute);
+app.use("/companies", UserRoute);
 app.use("/unis", UnisRoute);
+app.use("/alert", NotificationRoute);
 
 app.get("/", (_, res) => {
   res.send({ message: "UNMG Workplace API is now live." }).status(200);

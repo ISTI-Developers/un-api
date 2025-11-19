@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { MySQL } from "../config/db";
+import { send } from "../utils/helper";
 
 const db = new MySQL();
 
@@ -9,6 +10,12 @@ export const UserController = {
   },
   async getUsers(req: Request, res: Response) {
     const rows = await db.query("SELECT * FROM un_users");
-    res.status(200).send(rows);
+    send(res).ok(rows);
+  },
+  async getUsersSummary(req: Request, res: Response) {
+    const rows = await db.query(
+      "SELECT user_id, name, position, company_id, department_id, unit_id"
+    );
+    send(res).ok(rows);
   },
 };

@@ -5,4 +5,8 @@ const router = express.Router();
 
 router.get("/test", UserController.test);
 
+router.get("/", UserController.getUsers);
+
+router.get("/summary", UserController.getUsersSummary);
+
 export const UserRoute = router;
