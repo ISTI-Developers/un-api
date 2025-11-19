@@ -14,7 +14,7 @@ export const UserController = {
   },
   async getUsersSummary(req: Request, res: Response) {
     const rows = await db.query(
-      "SELECT user_id, name, position, company_id, department_id, unit_id"
+      "SELECT user_id, name, position, company_id, department_id, unit_id FROM un_users"
     );
     send(res).ok(rows);
   },
