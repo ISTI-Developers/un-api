@@ -20,7 +20,7 @@ app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 app.use("/users", UserRoute);
-app.use("/companies", UserRoute);
+app.use("/companies", CompanyRoute);
 app.use("/unis", UnisRoute);
 app.use("/alert", NotificationRoute);
 
