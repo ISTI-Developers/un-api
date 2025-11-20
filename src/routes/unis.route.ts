@@ -9,6 +9,8 @@ router.get("/latest", UnisController.getLatestSites);
 
 router.get("/images/:site", UnisController.getSiteImages);
 
+router.get("/files",UnisController.getImageFile);
+
 router.get("/areas", UnisController.getAreas);
 
 export const UnisRoute = router;

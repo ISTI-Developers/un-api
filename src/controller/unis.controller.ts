@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { MySQL } from "../config/db";
 import { send } from "../utils/helper";
 import { ResultSetHeader } from "mysql2";
+import axios from "axios";
 
 const db = new MySQL({
   host: "192.168.10.10",
@@ -257,6 +258,23 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       send(res).ok(imageLinks);
     } else {
       send(res).ok("No images found for " + site);
+    }
+  },
+
+  async getImageFile(req: Request, res: Response) {
+    const path = req.query.path;
+
+    const filePath = `https://unis.unitedneon.com/unis/${path}`;
+
+    try {
+      const response = await axios.get(filePath, {
+        responseType: "arraybuffer",
+      });
+      res.setHeader("Content-Type", response.headers["content-type"]);
+      res.send(response.data);
+    } catch (e) {
+      console.log(e);
+      res.status(404).send("Image not found");
     }
   },
 
