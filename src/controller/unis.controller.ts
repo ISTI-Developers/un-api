@@ -92,7 +92,7 @@ FROM
     WHERE
         A.void = 0
             AND A.material_availability IS NOT NULL
-            AND A.addendum_type <> 5
+            AND A.addendum_type NOT IN (1,5)
             AND C.status_id = 1
             AND C.deleted = 0
             AND D.status_id = 1
