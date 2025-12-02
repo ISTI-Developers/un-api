@@ -11,6 +11,8 @@ router.get("/images/:site", UnisController.getSiteImages);
 
 router.get("/files",UnisController.getImageFile);
 
+router.get("/files/:id",UnisController.getImageThumbnail);
+
 router.get("/areas", UnisController.getAreas);
 
 export const UnisRoute = router;

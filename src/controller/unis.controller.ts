@@ -15,16 +15,11 @@ interface SiteImages extends ResultSetHeader {
   image: string;
 }
 
+
 export const UnisController = {
   async getAvailableSites(_: Request, res: Response) {
     const rows = await db.query(`SELECT 
-    structure,
-    site,
-    category,
-    product,
-    client,
-    address,
-    date_from,
+*,
     CASE
         WHEN
             addendum_type = 5
@@ -97,6 +92,7 @@ FROM
     WHERE
         A.void = 0
             AND A.material_availability IS NOT NULL
+            AND A.addendum_type <> 5
             AND C.status_id = 1
             AND C.deleted = 0
             AND D.status_id = 1
@@ -131,8 +127,15 @@ FROM
     GROUP BY B.structure_id) B ON A.structure_id = B.structure_id
     GROUP BY segment_id) A
     LEFT JOIN hd_lease_contract B ON A.lease_contract_id = B.lease_contract_id
-    LEFT JOIN hd_lease_payment_detail C ON A.lease_contract_id = C.lease_contract_id AND CURDATE() BETWEEN C.date_from AND C.date_to
- UNION ALL SELECT 
+	LEFT JOIN hd_lease_payment_detail C
+		ON A.lease_contract_id = C.lease_contract_id
+		AND CURDATE() BETWEEN C.date_from AND C.date_to
+		AND NOT EXISTS (
+			SELECT 1
+			FROM hd_lease_payment_detail X
+			WHERE X.replace_id = C.payment_detail_id
+		)
+UNION ALL SELECT 
         NULL AS contract_structure_id,
             B.structure_id,
             C.segment_id,
@@ -168,7 +171,7 @@ FROM
     JOIN hd_structure_segment C ON A.structure_id = C.structure_id
     JOIN hd_structure_category D ON B.category_id = D.category_id
     LEFT JOIN hd_lease_contract E ON A.lease_contract_id = E.lease_contract_id
-    LEFT JOIN hd_contract_structure F ON B.structure_id = F.structure_id 
+    LEFT JOIN hd_contract_structure F ON B.structure_id = F.structure_id
         AND C.segment_id = F.segment_id
     WHERE
         F.contract_structure_id IS NULL
@@ -261,6 +264,35 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
     }
   },
 
+  async getImageThumbnail(req: Request, res: Response) {
+    const id = req.params.id;
+
+    if (!id) send(res).error("No id found.");
+
+    const [image] = await db.query(
+      "SELECT * FROM hd_file_upload WHERE upload_id = ?",
+      [id]
+    );
+
+    if (image) {
+      const path = image.upload_path;
+
+      const filePath = `https://unis.unitedneon.com/unis/${path}`;
+
+      try {
+        const response = await axios.get(filePath, {
+          responseType: "arraybuffer",
+        });
+        res.setHeader("Content-Type", response.headers["content-type"]);
+        res.send(response.data);
+      } catch (e) {
+        console.log(e);
+        res.status(404).send("Image not found");
+      }
+    } else {
+      send(res).error("No image found.");
+    }
+  },
   async getImageFile(req: Request, res: Response) {
     const path = req.query.path;
 
