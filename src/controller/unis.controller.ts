@@ -15,11 +15,16 @@ interface SiteImages extends ResultSetHeader {
   image: string;
 }
 
-
 export const UnisController = {
   async getAvailableSites(_: Request, res: Response) {
     const rows = await db.query(`SELECT 
-*,
+    structure,
+    site,
+    category,
+    product,
+    client,
+    address,
+    date_from,
     CASE
         WHEN
             addendum_type = 5
@@ -99,7 +104,7 @@ FROM
             AND D.deleted = 0
             AND D.transformed = 0
             AND C.product_division_id IN (1 , 49)
-            AND B.contract_status_id NOT IN (5 , 6)
+            AND B.contract_status_id NOT IN (0,1,2,5,6)
             AND B.renewal_contract_id = 0
     GROUP BY A.segment_id
     ORDER BY A.structure_id ASC , A.segment_id ASC) A
