@@ -3,6 +3,7 @@ import { MySQL } from "../config/db";
 import { send } from "../utils/helper";
 import { ResultSetHeader } from "mysql2";
 import axios from "axios";
+import sharp from "sharp";
 
 const db = new MySQL({
   host: "192.168.10.10",
@@ -288,8 +289,20 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
         const response = await axios.get(filePath, {
           responseType: "arraybuffer",
         });
-        res.setHeader("Content-Type", response.headers["content-type"]);
-        res.send(response.data);
+        const buffer = Buffer.from(response.data);
+        const outputBuffer = await sharp(buffer)
+          .resize(832, 440, {
+            fit: "cover", // crop to fill exactly
+            position: "center", // center crop
+          })
+          .webp({ quality: 100 })
+          .toBuffer();
+
+        res.setHeader("Content-Type", "image/webp");
+        res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
+        res.send(outputBuffer);
+        // res.setHeader("Content-Type", response.headers["content-type"]);
+        // res.send(response.data);
       } catch (e) {
         console.log(e);
         res.status(404).send("Image not found");
@@ -307,8 +320,21 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
       });
-      res.setHeader("Content-Type", response.headers["content-type"]);
-      res.send(response.data);
+      const buffer = Buffer.from(response.data);
+
+      const outputBuffer = await sharp(buffer)
+        .resize(832, 440, {
+          fit: "cover", // crop to fill exactly
+          position: "center", // center crop
+        })
+        .webp({ quality: 100 })
+        .toBuffer();
+
+      res.setHeader("Content-Type", "image/webp");
+      res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
+      res.send(outputBuffer);
+      // res.setHeader("Content-Type", response.headers["content-type"]);
+      // res.send(response.data);
     } catch (e) {
       console.log(e);
       res.status(404).send("Image not found");
