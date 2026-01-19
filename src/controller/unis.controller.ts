@@ -203,7 +203,7 @@ JOIN hd_ad_city ac ON s.city_id = ac.city_id
 JOIN hd_ad_division ad ON s.division_id = ad.division_id
 JOIN hd_structure_category sc ON s.category_id = sc.category_id
 WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) ORDER BY s.structure_id DESC;`,
-      [date]
+      [date],
     );
 
     send(res).ok(response);
@@ -277,7 +277,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
 
     const [image] = await db.query(
       "SELECT * FROM hd_file_upload WHERE upload_id = ?",
-      [id]
+      [id],
     );
 
     if (image) {
@@ -327,14 +327,13 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
           fit: "cover", // crop to fill exactly
           position: "center", // center crop
         })
-        .webp({ quality: 100 })
+        .jpeg({ quality: 90 })
         .toBuffer();
 
-      res.setHeader("Content-Type", "image/webp");
-      res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Content-Length", outputBuffer.length);
+      res.setHeader("Cache-Control", "public, max-age=86400");
       res.send(outputBuffer);
-      // res.setHeader("Content-Type", response.headers["content-type"]);
-      // res.send(response.data);
     } catch (e) {
       console.log(e);
       res.status(404).send("Image not found");
@@ -343,7 +342,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
 
   async getAreas(_: Request, res: Response) {
     const response = await db.query(
-      "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;"
+      "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;",
     );
 
     send(res).ok(response);
