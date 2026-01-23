@@ -228,13 +228,14 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
     } else {
       query = query + " = ?";
     }
-    query = `SELECT image FROM (${query}) A `;
+    query = `SELECT image FROM (${query} AND ss.deleted = 0) A `;
     const params: string[] = [structure!];
     if (segment) {
       query = query + " WHERE segment_code = ?";
       params.push(segment);
     }
-
+    
+    // console.log(query, params)
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
       if (!imageIDs.image) {
