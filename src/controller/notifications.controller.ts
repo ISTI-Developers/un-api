@@ -4,6 +4,7 @@ import webpush from "web-push";
 import { MySQL } from "../config/db";
 import { send } from "../utils/helper";
 import { ResultSetHeader } from "mysql2";
+import { format } from "date-fns";
 
 webpush.setVapidDetails(
   "mailto: <vncntkyl.developer@gmail.com>",
@@ -55,7 +56,7 @@ export const NotificationController = {
       });
 
       send(res).ok(filteredNotifications);
-    }else{
+    } else {
       send(res).ok([]);
     }
   },
@@ -77,7 +78,7 @@ export const NotificationController = {
 
     if (!body) send(res).error("Notification is missing.");
     const query =
-      "INSERT INTO push_notifications (title, body, url, tag, platform, recipients) VALUES (?,?,?,?,?,?)";
+      "INSERT INTO push_notifications (title, body, url, tag, platform, recipients, created_at) VALUES (?,?,?,?,?,?,?)";
     const recipients = JSON.stringify(body.recipients);
     await db.query(query, [
       body.title,
@@ -86,6 +87,7 @@ export const NotificationController = {
       body.tag,
       body.platform,
       recipients,
+      format(new Date(),"yyyy-MM-dd HH:mm:ss"),
     ]);
     send(res).ok({ acknowledged: true, message: "Notification saved." });
   },
@@ -129,8 +131,8 @@ export const NotificationController = {
     const body = req.body;
 
     const query =
-      "INSERT INTO push_receipts (notification_id, user_id) VALUES (?,?)";
-    await db.query(query, [body.notification_id, body.user_id]);
+      "INSERT INTO push_receipts (notification_id, user_id, read_at) VALUES (?,?,?)";
+    await db.query(query, [body.notification_id, body.user_id, format(new Date(),"yyyy-MM-dd HH:mm:ss")]);
     send(res).ok({ acknowledged: true, message: "Receipt saved." });
   },
 };
