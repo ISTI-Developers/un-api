@@ -196,7 +196,7 @@ ORDER BY division_id ASC , structure ASC , site ASC`);
     const date = req.query.date;
 
     const response = await db.query(
-      `SELECT s.structure_id, s.structure_code, COALESCE(CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')),CONCAT(s.structure_code,'-','XXXXX')) as site_code, ac.city_name as city, ad.division_name as region, s.address, ss.latitude, ss.longitude, sc.category as site_owner, CONCAT(s.structure_height," x ", s.structure_width) as size, s.vicinity_population, s.traffic_count,ss.facing as board_facing, s.traffic as bound, COALESCE(COALESCE(ss.date_modified, ss.date_created), s.date_created) as date_created FROM hd_structure s 
+      `SELECT s.structure_id, s.structure_code, COALESCE(CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')),CONCAT(s.structure_code,'-','XXXXX')) as site_code, ac.city_name as city, ad.division_name as region, s.address, ss.latitude, ss.longitude, sc.category as site_owner, CONCAT(ss.height," x ", ss.width) as size, s.vicinity_population, s.traffic_count,ss.facing as board_facing, s.traffic as bound, COALESCE(COALESCE(ss.date_modified, ss.date_created), s.date_created) as date_created FROM hd_structure s 
 LEFT JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id 
 LEFT JOIN hd_structure_status st ON s.status_id = st.status_id 
 JOIN hd_ad_city ac ON s.city_id = ac.city_id
@@ -221,7 +221,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
     segment = structure === "3D" ? undefined : segment;
 
     let query =
-      "SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, ss.image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
+      "SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, COALESCE(ss.image,s.image) as image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
 
     if (structure === "3D") {
       query = query + " LIKE ?";
@@ -235,7 +235,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       params.push(segment);
     }
     
-    // console.log(query, params)
+    console.log(query, params)
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
       if (!imageIDs.image) {
