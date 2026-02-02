@@ -235,7 +235,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       params.push(segment);
     }
     
-    console.log(query, params)
+    // console.log(query, params)
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
       if (!imageIDs.image) {

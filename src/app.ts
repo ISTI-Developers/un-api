@@ -8,6 +8,7 @@ import { UserRoute } from "./routes/users.route";
 import { UnisRoute } from "./routes/unis.route";
 import { NotificationRoute } from "./routes/notification.route";
 import { CompanyRoute } from "./routes/company.route";
+import { UTASIRoute } from "./routes/utasi.route";
 const app = express();
 
 const PORT = CONFIG.PORT || 8001;
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
+app.use("/utasi", UTASIRoute);
 app.use("/users", UserRoute);
 app.use("/companies", CompanyRoute);
 app.use("/unis", UnisRoute);
