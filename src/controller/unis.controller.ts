@@ -4,6 +4,7 @@ import { send } from "../utils/helper";
 import { ResultSetHeader } from "mysql2";
 import axios from "axios";
 import sharp from "sharp";
+import { Agent } from "https";
 
 const db = new MySQL({
   host: "192.168.10.10",
@@ -11,6 +12,7 @@ const db = new MySQL({
   password: "Oams@UN",
   database: "oams-un",
 });
+const agent = new Agent({ rejectUnauthorized: false });
 
 interface SiteImages extends ResultSetHeader {
   image: string;
@@ -105,8 +107,9 @@ FROM
             AND D.deleted = 0
             AND D.transformed = 0
             AND C.product_division_id IN (1 , 49)
-            AND B.contract_status_id NOT IN (0,1,2,5,6)
+            AND B.contract_status_id NOT IN (0,1,2,4,5,6)
             AND B.renewal_contract_id = 0
+            AND A.contract_structure_id_reference = 0
     GROUP BY A.segment_id
     ORDER BY A.structure_id ASC , A.segment_id ASC) A
     JOIN hd_contract_structure B ON A.contract_structure_id = B.contract_structure_id
@@ -234,7 +237,7 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
       query = query + " WHERE segment_code = ?";
       params.push(segment);
     }
-    
+
     // console.log(query, params)
     const [imageIDs] = await db.query<SiteImages>(query, params);
     if (imageIDs) {
@@ -284,11 +287,12 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
     if (image) {
       const path = image.upload_path;
 
-      const filePath = `https://unis.unitedneon.com/unis/${path}`;
+      const filePath = `https://192.168.10.10/unis/${path}`;
 
       try {
         const response = await axios.get(filePath, {
           responseType: "arraybuffer",
+          httpsAgent: agent,
         });
         const buffer = Buffer.from(response.data);
         const outputBuffer = await sharp(buffer)
@@ -315,11 +319,12 @@ WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) O
   async getImageFile(req: Request, res: Response) {
     const path = req.query.path;
 
-    const filePath = `https://unis.unitedneon.com/unis/${path}`;
+    const filePath = `https://192.168.10.10/unis/${path}`;
 
     try {
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
+        httpsAgent: agent,
       });
       const buffer = Buffer.from(response.data);
 

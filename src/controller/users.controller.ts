@@ -5,7 +5,7 @@ import { send } from "../utils/helper";
 const db = new MySQL();
 
 export const UserController = {
-  async test(req: Request, res: Response) {
+  async test(_: Request, res: Response) {
     res.status(200).send({ message: "User is accessible" });
   },
   async getUsers(req: Request, res: Response) {
