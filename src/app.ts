@@ -9,6 +9,7 @@ import { UnisRoute } from "./routes/unis.route";
 import { NotificationRoute } from "./routes/notification.route";
 import { CompanyRoute } from "./routes/company.route";
 import { UTASIRoute } from "./routes/utasi.route";
+import { JVRoute } from "./routes/jv.route";
 const app = express();
 
 const PORT = CONFIG.PORT || 8001;
@@ -24,6 +25,7 @@ app.use("/utasi", UTASIRoute);
 app.use("/users", UserRoute);
 app.use("/companies", CompanyRoute);
 app.use("/unis", UnisRoute);
+app.use("/jv", JVRoute);
 app.use("/alert", NotificationRoute);
 
 app.get("/", (_, res) => {
@@ -33,11 +35,11 @@ app.get("/", (_, res) => {
 if (CONFIG.NODE_ENV === "production") {
   const privateKey = fs.readFileSync(
     "/etc/letsencrypt/live/api.unmg.com.ph/privkey.pem",
-    "utf8"
+    "utf8",
   );
   const certificate = fs.readFileSync(
     "/etc/letsencrypt/live/api.unmg.com.ph/fullchain.pem",
-    "utf8"
+    "utf8",
   );
 
   const credentials = {
@@ -47,13 +49,13 @@ if (CONFIG.NODE_ENV === "production") {
   const httpsServer = https.createServer(credentials, app);
   httpsServer.listen(CONFIG.PORT, () => {
     console.log(
-      `Running ${CONFIG.NODE_ENV} listening at ${CONFIG.SERVER}:${PORT}`
+      `Running ${CONFIG.NODE_ENV} listening at ${CONFIG.SERVER}:${PORT}`,
     );
   });
 } else {
   app.listen(PORT, () => {
     console.log(
-      `Running ${CONFIG.NODE_ENV} listening at ${CONFIG.SERVER}:${PORT}`
+      `Running ${CONFIG.NODE_ENV} listening at ${CONFIG.SERVER}:${PORT}`,
     );
   });
 }

@@ -1,0 +1,54 @@
+import { Request, Response } from "express";
+import { MSSQL } from "../config/db";
+import { send } from "../utils/helper";
+
+const db = new MSSQL();
+
+export const JVController = {
+  async test(_: Request, res: Response) {
+    res.status(200).send({ message: "JV is accessible" });
+  },
+
+  async getRevenue(req: Request, res: Response) {
+    const from = req.query.from;
+    const to = req.query.to;
+
+    console.log(from, to);
+    if (!from || !to) {
+      throw new Error("MAGBIGAY KA NG DATE");
+    }
+
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT *
+            FROM UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'',''${from}'',''${to}'')
+        ')`;
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+  async getExpenses(req: Request, res: Response) {
+    const from = req.query.from;
+    const to = req.query.to;
+
+    console.log(from, to);
+    if (!from || !to) {
+      throw new Error("MAGBIGAY KA NG DATE");
+    }
+
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT *
+            FROM UN_LIVE.dbo.TFN_JV_EXPENSE(''002-00'',''${from}'',''${to}'')
+        ')`;
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+};

@@ -43,13 +43,13 @@ export class MySQL {
 
     this.pool = mysql.createPool(this.config);
     console.log(
-      `✅ Connected to MySQL at ${this.config.host}:${this.config.port}`
+      `✅ Connected to MySQL at ${this.config.host}:${this.config.port}`,
     );
   }
 
   async query<T extends mysql.ResultSetHeader = any>(
     sql: string,
-    params?: any[]
+    params?: any[],
   ): Promise<T[]> {
     const [rows] = await this.pool.query<T[]>(sql, params);
     return rows;
@@ -84,7 +84,8 @@ export class MSSQL {
         encrypt: false, // true for Azure
         trustServerCertificate: true, // local dev
       },
-
+      requestTimeout: 60000,
+      connectionTimeout: 60000,
       ...config,
     };
 
@@ -94,7 +95,7 @@ export class MSSQL {
       .connect()
       .then(() => {
         console.log(
-          `✅ Connected to MSSQL at ${this.config.server}:${this.config.port}`
+          `✅ Connected to MSSQL at ${this.config.server}:${this.config.port}`,
         );
       })
       .catch((err) => {
@@ -105,10 +106,11 @@ export class MSSQL {
 
   async query<T = any>(
     sqlQuery: string,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    timeout = 60000, // allow override
   ): Promise<T[]> {
-    const request = this.pool.request();
-
+    const request = new sql.Request(this.pool);
+    (request as any).requestTimeout = timeout;
     if (params) {
       for (const [key, value] of Object.entries(params)) {
         request.input(key, value);
