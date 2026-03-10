@@ -195,6 +195,29 @@ ORDER BY division_id ASC , structure ASC , site ASC`);
     send(res).ok(rows);
   },
 
+  async getSiteRentals(_: Request, res: Response) {
+    const rows =
+      await db.query(`SELECT s.structure_code, CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment, 2, '0')) as site_code, A.net_contract_amount, A.payment_term_id FROM (
+SELECT lc2.lease_contract_id, lc2.structure_id, lpd.date_from, lpd.date_to, COALESCE(lpd.contract_amount, lc3.net_contract_amount) AS net_contract_amount, lc3.payment_term_id FROM (
+SELECT MAX(lc.lease_contract_id) AS lease_contract_id, lc1.structure_id FROM hd_lease_contract lc JOIN (
+SELECT s.structure_id, MAX(lc.date_to) as date_to 
+FROM hd_lease_contract lc 
+JOIN hd_structure s ON lc.structure_id = s.structure_id 
+WHERE lc.contract_status_id IN (0,3,9) 
+AND s.status_id = 1 
+AND s.deleted = 0 
+AND s.product_division_id IN (1,49) 
+AND (addendum_lease_contract_id IS NULL OR addendum_lease_contract_id = 0)
+GROUP BY s.structure_id
+) lc1 ON lc1.structure_id = lc.structure_id AND lc1.date_to = lc.date_to
+GROUP BY lc1.structure_id) AS lc2
+JOIN hd_lease_contract AS lc3 ON lc2.lease_contract_id = lc3.lease_contract_id
+LEFT JOIN hd_lease_payment_detail lpd ON lpd.lease_contract_id = lc2.lease_contract_id AND NOW() BETWEEN lpd.date_from AND lpd.date_to) A
+JOIN hd_structure s ON s.structure_id = A.structure_id
+JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id;
+    `);
+    send(res).ok(rows);
+  },
   async getLatestSites(req: Request, res: Response) {
     const date = req.query.date;
 
