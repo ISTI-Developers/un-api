@@ -55,7 +55,7 @@ export const JVController = {
     const query = `
     SELECT cAcctNo, cTitle
     FROM ACCOUNT
-    WHERE cCompanyID = ?
+    WHERE cCompanyID = '002-00'
       AND cCategory = 'Expenses'
       AND cType = 'Details'
       AND LEFT(cGeneral, 2) IN ('51','52','53')
@@ -63,7 +63,7 @@ export const JVController = {
   `;
 
     try {
-      const result = await db.query(query, ["002-00"]);
+      const result = await db.query(query);
       send(res).ok(result);
     } catch (error) {
       send(res).error(error);
@@ -74,7 +74,7 @@ export const JVController = {
     const query = `
     SELECT cAcctNo, cTitle
     FROM ACCOUNT
-    WHERE cCompanyID = ?
+    WHERE cCompanyID = '002-00'
       AND cCategory = 'Revenue'
       AND cType = 'Details'
       AND cGeneral IN ('4101','41','4')
@@ -82,7 +82,7 @@ export const JVController = {
   `;
 
     try {
-      const result = await db.query(query, ["002-00"]);
+      const result = await db.query(query);
       send(res).ok(result);
     } catch (error) {
       send(res).error(error);
