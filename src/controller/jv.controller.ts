@@ -51,4 +51,41 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async getExpensesCategory(req: Request, res: Response) {
+    const query = `
+    SELECT cAcctNo, cTitle
+    FROM ACCOUNT
+    WHERE cCompanyID = ?
+      AND cCategory = 'Expenses'
+      AND cType = 'Details'
+      AND LEFT(cGeneral, 2) IN ('51','52','53')
+    ORDER BY cTitle ASC
+  `;
+
+    try {
+      const result = await db.query(query, ["002-00"]);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+
+  async getRevenueCategory(req: Request, res: Response) {
+    const query = `
+    SELECT cAcctNo, cTitle
+    FROM ACCOUNT
+    WHERE cCompanyID = ?
+      AND cCategory = 'Revenue'
+      AND cType = 'Details'
+      AND cGeneral IN ('4101','41','4')
+    ORDER BY cTitle ASC
+  `;
+
+    try {
+      const result = await db.query(query, ["002-00"]);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 };
