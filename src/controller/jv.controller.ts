@@ -52,16 +52,15 @@ export const JVController = {
     }
   },
   async getExpensesCategory(req: Request, res: Response) {
-    const query = `
-    SELECT cAcctNo, cTitle
-    FROM ACCOUNT
-    WHERE cCompanyID = '002-00'
-      AND cCategory = 'Expenses'
-      AND cType = 'Details'
-      AND LEFT(cGeneral, 2) IN ('51','52','53')
-    ORDER BY cTitle ASC
-  `;
-
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT cAcctNo, cTitle
+            FROM UN_LIVE.dbo.ACCOUNT
+            WHERE cCompanyID = ''002-00''
+              AND cCategory = ''Expenses''
+              AND cType = ''Details''
+              AND LEFT(cGeneral, 2) IN (''51'',''52'',''53'')
+            ORDER BY cTitle ASC')`;
     try {
       const result = await db.query(query);
       send(res).ok(result);
@@ -71,16 +70,15 @@ export const JVController = {
   },
 
   async getRevenueCategory(req: Request, res: Response) {
-    const query = `
-    SELECT cAcctNo, cTitle
-    FROM ACCOUNT
-    WHERE cCompanyID = '002-00'
-      AND cCategory = 'Revenue'
-      AND cType = 'Details'
-      AND cGeneral IN ('4101','41','4')
-    ORDER BY cTitle ASC
-  `;
-
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT cAcctNo, cTitle
+            FROM UN_LIVE.dbo.ACCOUNT
+            WHERE cCompanyID = ''002-00''
+              AND cCategory = ''Revenue''
+              AND cType = ''Details''
+              AND cGeneral IN (''4101'',''41'',''4'')
+            ORDER BY cTitle ASC')`;
     try {
       const result = await db.query(query);
       send(res).ok(result);
