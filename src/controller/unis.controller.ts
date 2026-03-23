@@ -228,7 +228,7 @@ LEFT JOIN hd_structure_status st ON s.status_id = st.status_id
 JOIN hd_ad_city ac ON s.city_id = ac.city_id
 JOIN hd_ad_division ad ON s.division_id = ad.division_id
 JOIN hd_structure_category sc ON s.category_id = sc.category_id
-WHERE s.date_created > ? AND s.product_division_id = 1 AND st.status_id IN (1) ORDER BY s.structure_id DESC;`,
+WHERE YEAR(s.date_created) = 2026 AND s.product_division_id = 1 AND st.status_id IN (1) ORDER BY s.structure_id DESC;`,
       [date],
     );
 
