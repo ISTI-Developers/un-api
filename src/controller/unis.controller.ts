@@ -314,16 +314,23 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
       const filePath = `https://192.168.10.10/unis/${path}`;
 
       try {
+        res.setHeader(
+          "Access-Control-Expose-Headers",
+          "X-Image-Width, X-Image-Height",
+        );
         const response = await axios.get(filePath, {
           responseType: "arraybuffer",
           httpsAgent: agent,
         });
         const buffer = Buffer.from(response.data);
+
+        const image = sharp(buffer);
+        const metadata = await image.metadata();
+
+        res.setHeader("X-Image-Width", metadata.width || 0);
+        res.setHeader("X-Image-Height", metadata.height || 0);
+
         const outputBuffer = await sharp(buffer)
-          .resize(832, 440, {
-            fit: "cover", // crop to fill exactly
-            position: "center", // center crop
-          })
           .webp({ quality: 100 })
           .toBuffer();
 
@@ -342,27 +349,31 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   },
   async getImageFile(req: Request, res: Response) {
     const path = req.query.path;
-
     const filePath = `https://192.168.10.10/unis/${path}`;
 
     try {
+      res.setHeader(
+        "Access-Control-Expose-Headers",
+        "X-Image-Width, X-Image-Height",
+      );
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
         httpsAgent: agent,
       });
+
       const buffer = Buffer.from(response.data);
 
-      const outputBuffer = await sharp(buffer)
-        .resize(832, 440, {
-          fit: "cover", // crop to fill exactly
-          position: "center", // center crop
-        })
-        .jpeg({ quality: 90 })
-        .toBuffer();
+      const image = sharp(buffer);
+      const metadata = await image.metadata();
 
-      res.setHeader("Content-Type", "image/png");
+      res.setHeader("X-Image-Width", metadata.width || 0);
+      res.setHeader("X-Image-Height", metadata.height || 0);
+
+      const outputBuffer = await image.jpeg({ quality: 100 }).toBuffer();
+      res.setHeader("Content-Type", "image/jpeg");
       res.setHeader("Content-Length", outputBuffer.length);
       res.setHeader("Cache-Control", "public, max-age=86400");
+
       res.send(outputBuffer);
     } catch (e) {
       console.log(e);
