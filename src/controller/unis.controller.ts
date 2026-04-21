@@ -303,10 +303,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
     if (!id) send(res).error("No id found.");
 
-    const [image] = await db.query(
-      "SELECT * FROM hd_file_upload WHERE upload_id = ?",
-      [id],
-    );
+    const [image] = await db.query("SELECT * FROM hd_file_upload WHERE upload_id = ?", [id]);
 
     if (image) {
       const path = image.upload_path;
@@ -314,10 +311,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
       const filePath = `https://192.168.10.10/unis/${path}`;
 
       try {
-        res.setHeader(
-          "Access-Control-Expose-Headers",
-          "X-Image-Width, X-Image-Height",
-        );
+        res.setHeader("Access-Control-Expose-Headers", "X-Image-Width, X-Image-Height");
         const response = await axios.get(filePath, {
           responseType: "arraybuffer",
           httpsAgent: agent,
@@ -330,9 +324,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
         res.setHeader("X-Image-Width", metadata.width || 0);
         res.setHeader("X-Image-Height", metadata.height || 0);
 
-        const outputBuffer = await sharp(buffer)
-          .webp({ quality: 100 })
-          .toBuffer();
+        const outputBuffer = await sharp(buffer).webp({ quality: 100 }).toBuffer();
 
         res.setHeader("Content-Type", "image/webp");
         res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
@@ -352,10 +344,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
     const filePath = `https://192.168.10.10/unis/${path}`;
 
     try {
-      res.setHeader(
-        "Access-Control-Expose-Headers",
-        "X-Image-Width, X-Image-Height",
-      );
+      res.setHeader("Access-Control-Expose-Headers", "X-Image-Width, X-Image-Height");
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
         httpsAgent: agent,
@@ -382,10 +371,42 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   },
 
   async getAreas(_: Request, res: Response) {
+    const response = await db.query("SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;");
+
+    send(res).ok(response);
+  },
+
+  // JV MICROSITE RELATED
+  async getRevenueOfJV(_: Request, res: Response) {
     const response = await db.query(
-      "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;",
+      `SELECT A.invoice_id,C.job_number, B.reference_date,
+         D.address,
+         CASE WHEN B.subcustomer_id = '' or B.subcustomer_id is null or B.subcustomer_id = 0 THEN 
+				B.customer_name
+				ELSE F.subcustomer_name END Customer_Name,
+         case when C.project = '' then C.product else C.project end as Pruduct,
+		 C.project project,
+         A.date_from,A.date_to
+          FROM hd_invoice A
+          LEFT OUTER JOIN hd_contract B on A.contract_id = B.contract_id  and B.deleted = A.deleted 
+          LEFT OUTER JOIN hd_contract_structure C on A.contract_structure_id = C.contract_structure_id  and A.deleted = C.deleted 
+          LEFT OUTER JOIN hd_structure D on C.structure_id  = D.structure_id and D.deleted = C.deleted 
+          LEFT OUTER JOIN hd_customer_subcustomer E on B.subcustomer_id = E.subcustomer_id and B.deleted = E.deleted 
+          LEFT OUTER JOIN hd_customer_subcustomer F on B.customer_id = F.customer_id AND B.subcustomer_id = F.subcustomer_id and B.deleted = F.deleted
+          WHERE D.category_id = 4 and D.deleted = 0 and B.deleted = 0 and A.amount = 0`,
     );
 
     send(res).ok(response);
   },
+  async getLocations(_: Request, res: Response) {
+    const response = await db.query(
+      `SELECT A.address cLocation
+        FROM hd_structure A
+        LEFT OUTER JOIN hd_structure_owned B on A.structure_id = B.structure_id
+        LEFT OUTER JOIN hd_structure_owner C ON B.owner_id =C.owner_id
+        WHERE A.category_id = 4 and A.deleted = 0 And B.deleted = 0 and C.deleted = 0`,
+    );
+    send(res).ok(response);
+  },
+  // END OF JV MICROSITE RELATED
 };
