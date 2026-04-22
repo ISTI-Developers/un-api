@@ -43,13 +43,13 @@ export const JVController = {
       A.cGroupName [Group Name],
       A.cReportGroup [Report Group]
     FROM UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'', ''@from'', ''@to'', ''Sales Invoice'') A
-    LEFT OUTER JOIN PR_T B
+    LEFT OUTER JOIN UN_LIVE.dbo.PR_T B
       ON A.cCompanyID = B.cCompanyID
       AND A.cInvNo = B.cInvNo
       AND A.cContractID = B.cContractID
       AND A.cJobNo = B.cJobNo
       AND A.dDueDate = B.dDueDateFrom
-    LEFT OUTER JOIN PR D
+    LEFT OUTER JOIN UN_LIVE.dbo.PR D
       ON B.cCompanyID = D.cCompanyID
       AND B.cTranNo = D.cTranNo
     LEFT OUTER JOIN UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'', ''@from'',''@to'', ''Credit Memo'') C
