@@ -25,7 +25,7 @@ export const JVController = {
       A.cSalesmanName [Salesman Name],
       A.cContractID [Contract ID],
       A.cJobNo [Job Number],
-      A.dDueDate [Due Date],
+      A.dDueDate [Due Date From],
       A.dDueDateTo [Due Date To],
       A.cSiteID [Site ID],
       A.cStuctureID [Structure ID],
@@ -35,6 +35,7 @@ export const JVController = {
       A.nAmount [Invoice Amount],
       B.cTranNo [OR Number],
       B.nApplied [OR Amount],
+      D.dDate [OR Date],
       C.cTranNo [CM/DM Transaction No],
       C.nAmount [CM/DM Amount],
       A.cLocation [Location],
@@ -47,19 +48,19 @@ export const JVController = {
       AND A.cContractID = B.cContractID
       AND A.cJobNo = B.cJobNo
       AND A.dDueDate = B.dDueDateFrom
+    LEFT OUTER JOIN PR D
+      ON B.cCompanyID = D.cCompanyID
+      AND B.cTranNo = D.cTranNo
     LEFT OUTER JOIN [dbo].[TFN_JV_REVENUE]('002-00', @from, @to, 'Credit Memo') C
       ON A.cInvNo = C.cInvNo
       AND A.cJobNo = C.cJobNo
       AND A.dDueDate = C.dDueDate
       AND A.cStuctureID = C.cStuctureID
+    WHERE ISNULL(C.cTranNo, '') = ''
   `;
 
     try {
-      const result = await db.query(query, {
-        from,
-        to,
-      });
-
+      const result = await db.query(query, { from, to });
       send(res).ok(result);
     } catch (error) {
       send(res).error(error);
