@@ -16,7 +16,6 @@ export const JVController = {
     if (!from || !to) {
       throw new Error("From and To dates are required.");
     }
-
     const query = `
     SELECT
       A.cInvNo [Invoice No],
@@ -41,7 +40,7 @@ export const JVController = {
       A.cLocation [Location],
       A.cGroupName [Group Name],
       A.cReportGroup [Report Group]
-    FROM [dbo].[TFN_JV_REVENUE]('002-00', @from, @to, 'Sales Invoice') A
+    FROM UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'', ''@from'', ''@to'', ''Sales Invoice'') A
     LEFT OUTER JOIN PR_T B
       ON A.cCompanyID = B.cCompanyID
       AND A.cInvNo = B.cInvNo
@@ -51,12 +50,12 @@ export const JVController = {
     LEFT OUTER JOIN PR D
       ON B.cCompanyID = D.cCompanyID
       AND B.cTranNo = D.cTranNo
-    LEFT OUTER JOIN [dbo].[TFN_JV_REVENUE]('002-00', @from, @to, 'Credit Memo') C
+    LEFT OUTER JOIN UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'', ''@from'',''@to'', ''Credit Memo'') C
       ON A.cInvNo = C.cInvNo
       AND A.cJobNo = C.cJobNo
       AND A.dDueDate = C.dDueDate
       AND A.cStuctureID = C.cStuctureID
-    WHERE ISNULL(C.cTranNo, '') = ''
+    WHERE ISNULL(C.cTranNo, '''') = ''''
   `;
 
     try {
