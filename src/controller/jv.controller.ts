@@ -10,21 +10,56 @@ export const JVController = {
   },
 
   async getRevenue(req: Request, res: Response) {
-    const from = req.query.from;
-    const to = req.query.to;
+    const from = String(req.query.from ?? "");
+    const to = String(req.query.to ?? "");
 
-    console.log(from, to);
     if (!from || !to) {
-      throw new Error("MAGBIGAY KA NG DATE");
+      throw new Error("From and To dates are required.");
     }
 
-    const query = `SELECT *
-        FROM OPENQUERY(UNLIVE_LINK, '
-            SELECT *
-            FROM UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'',''${from}'',''${to}'')
-        ')`;
+    const query = `
+    SELECT
+      A.cInvNo [Invoice No],
+      A.dDate [Invoice Date],
+      A.cClientName [Client Name],
+      A.cSalesmanName [Salesman Name],
+      A.cContractID [Contract ID],
+      A.cJobNo [Job Number],
+      A.dDueDate [Due Date],
+      A.dDueDateTo [Due Date To],
+      A.cSiteID [Site ID],
+      A.cStuctureID [Structure ID],
+      A.cStructureAddress [Structure Address],
+      A.cAcctNo [Account No],
+      A.cTitle [Title],
+      A.nAmount [Invoice Amount],
+      B.cTranNo [OR Number],
+      B.nApplied [OR Amount],
+      C.cTranNo [CM/DM Transaction No],
+      C.nAmount [CM/DM Amount],
+      A.cLocation [Location],
+      A.cGroupName [Group Name],
+      A.cReportGroup [Report Group]
+    FROM [dbo].[TFN_JV_REVENUE]('002-00', @from, @to, 'Sales Invoice') A
+    LEFT OUTER JOIN PR_T B
+      ON A.cCompanyID = B.cCompanyID
+      AND A.cInvNo = B.cInvNo
+      AND A.cContractID = B.cContractID
+      AND A.cJobNo = B.cJobNo
+      AND A.dDueDate = B.dDueDateFrom
+    LEFT OUTER JOIN [dbo].[TFN_JV_REVENUE]('002-00', @from, @to, 'Credit Memo') C
+      ON A.cInvNo = C.cInvNo
+      AND A.cJobNo = C.cJobNo
+      AND A.dDueDate = C.dDueDate
+      AND A.cStuctureID = C.cStuctureID
+  `;
+
     try {
-      const result = await db.query(query);
+      const result = await db.query(query, {
+        from,
+        to,
+      });
+
       send(res).ok(result);
     } catch (error) {
       send(res).error(error);
@@ -34,9 +69,9 @@ export const JVController = {
     const from = req.query.from;
     const to = req.query.to;
 
-    console.log(from, to);
+    // console.log(from, to);
     if (!from || !to) {
-      throw new Error("MAGBIGAY KA NG DATE");
+      throw new Error("From and To dates are required.");
     }
 
     const query = `SELECT *
