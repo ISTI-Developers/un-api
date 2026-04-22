@@ -17,6 +17,8 @@ export const JVController = {
       throw new Error("From and To dates are required.");
     }
     const query = `
+    SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
     SELECT
       A.cInvNo [Invoice No],
       A.dDate [Invoice Date],
@@ -56,7 +58,7 @@ export const JVController = {
       AND A.dDueDate = C.dDueDate
       AND A.cStuctureID = C.cStuctureID
     WHERE ISNULL(C.cTranNo, '''') = ''''
-  `;
+     ')`;
 
     try {
       const result = await db.query(query, { from, to });
