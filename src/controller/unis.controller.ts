@@ -400,11 +400,19 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   },
   async getLocations(_: Request, res: Response) {
     const response = await db.query(
-      `SELECT A.address cLocation
+      `SELECT A.structure_id, A.structure_code, A.address AS cLocation
         FROM hd_structure A
-        LEFT OUTER JOIN hd_structure_owned B on A.structure_id = B.structure_id
-        LEFT OUTER JOIN hd_structure_owner C ON B.owner_id =C.owner_id
-        WHERE A.category_id = 4 and A.deleted = 0 And B.deleted = 0 and C.deleted = 0`,
+        WHERE A.category_id = 4
+          AND A.deleted = 0
+          AND EXISTS (
+            SELECT 1
+            FROM hd_structure_owned B
+            INNER JOIN hd_structure_owner C ON B.owner_id = C.owner_id
+            WHERE B.structure_id = A.structure_id
+              AND B.deleted = 0
+              AND C.deleted = 0
+          )
+        ORDER BY A.structure_id ASC`,
     );
     send(res).ok(response);
   },
