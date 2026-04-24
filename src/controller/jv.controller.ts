@@ -40,6 +40,7 @@ export const JVController = {
       C.cTranNo AS cmdmTransactionNo,
       C.nAmount AS cmdmAmount,
       A.cLocation,
+      E.cBrandName,
       A.cGroupName,
       A.cReportGroup
     FROM UN_LIVE.dbo.TFN_JV_REVENUE(''002-00'', ''${from}'',''${to}'', ''Sales Invoice'') A
@@ -57,6 +58,8 @@ export const JVController = {
       AND A.cJobNo = C.cJobNo
       AND A.dDueDate = C.dDueDate
       AND A.cStuctureID = C.cStuctureID
+    LEFT OUTER JOIN CONTRACT_T E ON A.cCompanyID = E.cCompanyID and A.cContractID = E.cContractID_HDI and A.cJobNo = E.cJobNo and 
+    A.cStuctureID = E.cStructureID and A.cSiteID = E.cSiteID
     WHERE ISNULL(C.cTranNo, '''') = ''''
      ')`;
 
