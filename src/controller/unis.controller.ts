@@ -423,12 +423,9 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
         AND D.deleted = 0
         AND B.deleted = 0
         AND A.amount = 0
-        AND (
-          ? IS NULL
-          OR D.structure_id IN (?)
-        )
+        ${structure_ids.length ? "AND D.structure_id IN (?)" : ""}
     ORDER BY B.reference_date DESC`,
-      [structure_ids.length ? 1 : null, structure_ids],
+      structure_ids.length ? [structure_ids] : [],
     );
 
     send(res).ok(response);
