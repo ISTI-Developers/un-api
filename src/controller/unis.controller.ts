@@ -378,7 +378,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
   // JV MICROSITE RELATED
   async getRevenueOfJV(req: Request, res: Response) {
-    const { structure_ids } = req.body;
+    const structure_ids = req.query.structure_ids ? String(req.query.structure_ids).split(",").map(Number) : [];
 
     const response = await db.query(
       `SELECT 
@@ -428,7 +428,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
           OR D.structure_id IN (?)
         )
     ORDER BY B.reference_date DESC`,
-      [structure_ids?.length ? 1 : null, structure_ids],
+      [structure_ids.length ? 1 : null, structure_ids],
     );
 
     send(res).ok(response);
