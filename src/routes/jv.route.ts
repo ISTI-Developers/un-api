@@ -12,6 +12,8 @@ router.get("/expenses/category", JVController.getExpensesCategory);
 router.get("/revenue", JVController.getRevenue);
 router.get("/revenue/category", JVController.getRevenueCategory);
 
+router.get("/getLocationsGroupName", JVController.getLocationsGroupName);
+
 router.get("/getRevenueOfJV", UnisController.getRevenueOfJV);
 router.get("/getLocations", UnisController.getLocations);
 
