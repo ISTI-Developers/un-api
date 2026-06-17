@@ -126,11 +126,23 @@ export const JVController = {
       send(res).error(error);
     }
   },
-  async getLocationsGroupName(req: Request, res: Response) {
+  async getParentsGroupName(req: Request, res: Response) {
     const query = `SELECT *
         FROM OPENQUERY(UNLIVE_LINK, '
             SELECT *
             FROM UN_LIVE.dbo.JointVenture')`;
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+  async getChildGroupName(req: Request, res: Response) {
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT *
+            FROM UN_LIVE.dbo.JointVenture_T')`;
     try {
       const result = await db.query(query);
       send(res).ok(result);
