@@ -214,7 +214,7 @@ GROUP BY lc1.structure_id) AS lc2
 JOIN hd_lease_contract AS lc3 ON lc2.lease_contract_id = lc3.lease_contract_id
 LEFT JOIN hd_lease_payment_detail lpd ON lpd.lease_contract_id = lc2.lease_contract_id AND NOW() BETWEEN lpd.date_from AND lpd.date_to) A
 JOIN hd_structure s ON s.structure_id = A.structure_id
-JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id;
+JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id GROUP BY ss.segment_id;
     `);
     send(res).ok(rows);
   },
@@ -377,55 +377,23 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   },
 
   // JV MICROSITE RELATED
-  async getRevenueOfJV(req: Request, res: Response) {
-    const structure_ids = req.query.structure_ids ? String(req.query.structure_ids).split(",").map(Number) : [];
-
+  async getRevenueOfJV(_: Request, res: Response) {
     const response = await db.query(
-      `SELECT 
-        A.invoice_id,
-        C.job_number,
-        B.reference_date,
-        D.structure_id,
-        D.address,
-        CASE 
-            WHEN B.subcustomer_id = '' 
-                OR B.subcustomer_id IS NULL 
-                OR B.subcustomer_id = 0
-            THEN B.customer_name
-            ELSE F.subcustomer_name
-        END AS Customer_Name,
-        CASE 
-            WHEN C.project = '' 
-            THEN C.product 
-            ELSE C.project 
-        END AS Product,
-        C.project AS project,
-        A.date_from,
-        A.date_to
-    FROM hd_invoice A
-    LEFT OUTER JOIN hd_contract B 
-        ON A.contract_id = B.contract_id 
-        AND B.deleted = A.deleted
-    LEFT OUTER JOIN hd_contract_structure C 
-        ON A.contract_structure_id = C.contract_structure_id 
-        AND A.deleted = C.deleted
-    LEFT OUTER JOIN hd_structure D 
-        ON C.structure_id = D.structure_id 
-        AND D.deleted = C.deleted
-    LEFT OUTER JOIN hd_customer_subcustomer E 
-        ON B.subcustomer_id = E.subcustomer_id 
-        AND B.deleted = E.deleted
-    LEFT OUTER JOIN hd_customer_subcustomer F 
-        ON B.customer_id = F.customer_id 
-        AND B.subcustomer_id = F.subcustomer_id 
-        AND B.deleted = F.deleted
-    WHERE D.category_id = 4
-        AND D.deleted = 0
-        AND B.deleted = 0
-        AND A.amount = 0
-        ${structure_ids.length ? "AND D.structure_id IN (?)" : ""}
-    ORDER BY B.reference_date DESC`,
-      structure_ids.length ? [structure_ids] : [],
+      `SELECT A.invoice_id,C.job_number, B.reference_date,
+         D.address,
+         CASE WHEN B.subcustomer_id = '' or B.subcustomer_id is null or B.subcustomer_id = 0 THEN 
+				B.customer_name
+				ELSE F.subcustomer_name END Customer_Name,
+         case when C.project = '' then C.product else C.project end as Pruduct,
+		 C.project project,
+         A.date_from,A.date_to
+          FROM hd_invoice A
+          LEFT OUTER JOIN hd_contract B on A.contract_id = B.contract_id  and B.deleted = A.deleted 
+          LEFT OUTER JOIN hd_contract_structure C on A.contract_structure_id = C.contract_structure_id  and A.deleted = C.deleted 
+          LEFT OUTER JOIN hd_structure D on C.structure_id  = D.structure_id and D.deleted = C.deleted 
+          LEFT OUTER JOIN hd_customer_subcustomer E on B.subcustomer_id = E.subcustomer_id and B.deleted = E.deleted 
+          LEFT OUTER JOIN hd_customer_subcustomer F on B.customer_id = F.customer_id AND B.subcustomer_id = F.subcustomer_id and B.deleted = F.deleted
+          WHERE D.category_id = 4 and D.deleted = 0 and B.deleted = 0 and A.amount = 0`,
     );
 
     send(res).ok(response);

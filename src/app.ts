@@ -15,7 +15,9 @@ const app = express();
 const PORT = CONFIG.PORT || 8001;
 
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+app.use(
+  cors({ origin: "*", exposedHeaders: ["X-Image-Width", "X-Image-Height"] }),
+);
 app.use(express.text());
 app.use(express.json());
 app.use(bodyParser.json({ limit: "50mb" }));
