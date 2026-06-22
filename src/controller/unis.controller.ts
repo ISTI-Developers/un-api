@@ -416,23 +416,5 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
     );
     send(res).ok(response);
   },
-  async getTotalRealizedRevenue(_: Request, res: Response) {
-    const response = await db.query(
-      `SELECT A.cGroupName,A.cTitle,SUM(A.nAmount) RealizedRevenue
-        FROM TFN_JV_REVENUE('002-00','03/01/2026','03/31/2026','Sales Invoice') A
-        GROUP BY A.cGroupName,A.cTitle`,
-    );
-    send(res).ok(response);
-  },
-  async getOperatingExpense(_: Request, res: Response) {
-    const response = await db.query(
-      `SELECT A.cGroupName,A.cTitle,
-        CASE WHEN ISNULL(B.nForceAmount,0) <> 0 THEN B.nForceAmount ELSE A.nAmount END nUnitedneon
-          FROM UN_LIVE.dbo.TFN_JV_EXPENSE('002-00','03/01/2026','03/31/2026') A
-          LEFT OUTER JOIN UN_121825.dbo.moa_all_expense B ON A = B
-          GROUP BY A.cGroupName,A.cTitle`,
-    );
-    send(res).ok(response);
-  },
   // END OF JV MICROSITE RELATED
 };

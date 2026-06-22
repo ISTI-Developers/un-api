@@ -150,4 +150,48 @@ export const JVController = {
       send(res).error(error);
     }
   },
+
+  async getTotalRealizedRevenue(req: Request, res: Response) {
+    const from = req.query.from;
+    const to = req.query.to;
+
+    if (!from || !to) {
+      throw new Error("From and To dates are required.");
+    }
+
+    const query = `SELECT A.cGroupName,A.cTitle,SUM(A.nAmount) RealizedRevenue
+      FROM TFN_JV_REVENUE('002-00','${from}','${to}','Sales Invoice') A
+      GROUP BY A.cGroupName,A.cTitle`;
+
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+
+  async getOperatingExpense(req: Request, res: Response) {
+    const from = req.query.from;
+    const to = req.query.to;
+
+    if (!from || !to) {
+      throw new Error("From and To dates are required.");
+    }
+
+    const query = `SELECT A.cGroupName,A.cTitle,
+      SUM(CASE WHEN ISNULL(B.nForceAmount,0) <> 0 THEN B.nForceAmount ELSE A.nAmount END) nUnitedneon
+        FROM UN_LIVE.dbo.TFN_JV_EXPENSE('002-00','${from}','${to}') A
+        LEFT OUTER JOIN moa_all_expense B ON A.cAcctNo = B.account_no 
+        AND A.cTranNo = B.transaction_no 
+        AND A.cleaseContractID = B.lease_contract_id
+        GROUP BY A.cGroupName,A.cTitle`;
+
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 };

@@ -15,10 +15,10 @@ router.get("/revenue/category", JVController.getRevenueCategory);
 router.get("/getParentsGroupName", JVController.getParentsGroupName);
 router.get("/getChildGroupName", JVController.getChildGroupName);
 
+router.get("/getTotalRealizedRevenue", JVController.getTotalRealizedRevenue);
+router.get("/getOperatingExpense", JVController.getOperatingExpense);
 
 router.get("/getRevenueOfJV", UnisController.getRevenueOfJV);
 router.get("/getLocations", UnisController.getLocations);
-router.get("/getTotalRealizedRevenue", UnisController.getTotalRealizedRevenue);
-router.get("/getOperatingExpense", UnisController.getOperatingExpense);
 
 export const JVRoute = router;
