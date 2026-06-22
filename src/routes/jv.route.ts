@@ -18,5 +18,7 @@ router.get("/getChildGroupName", JVController.getChildGroupName);
 
 router.get("/getRevenueOfJV", UnisController.getRevenueOfJV);
 router.get("/getLocations", UnisController.getLocations);
+router.get("/getTotalRealizedRevenue", UnisController.getTotalRealizedRevenue);
+router.get("/getOperatingExpense", UnisController.getOperatingExpense);
 
 export const JVRoute = router;
