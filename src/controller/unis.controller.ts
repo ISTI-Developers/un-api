@@ -393,7 +393,8 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
           LEFT OUTER JOIN hd_structure D on C.structure_id  = D.structure_id and D.deleted = C.deleted 
           LEFT OUTER JOIN hd_customer_subcustomer E on B.subcustomer_id = E.subcustomer_id and B.deleted = E.deleted 
           LEFT OUTER JOIN hd_customer_subcustomer F on B.customer_id = F.customer_id AND B.subcustomer_id = F.subcustomer_id and B.deleted = F.deleted
-          WHERE D.category_id = 4 and D.deleted = 0 and B.deleted = 0 and A.amount = 0`,
+          WHERE D.category_id = 4 and D.deleted = 0 and B.deleted = 0 and A.amount = 0
+          ORDER BY B.reference_date DESC`,
     );
 
     send(res).ok(response);
