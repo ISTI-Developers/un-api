@@ -14,6 +14,7 @@ router.get("/revenue/category", JVController.getRevenueCategory);
 
 router.get("/getParentsGroupName", JVController.getParentsGroupName);
 router.get("/getChildGroupName", JVController.getChildGroupName);
+router.get ("/getVouchers", JVController.getVouchers);
 
 router.get("/getTotalRealizedRevenue", JVController.getTotalRealizedRevenue);
 router.get("/getOperatingExpense", JVController.getOperatingExpense);
