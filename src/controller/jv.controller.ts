@@ -205,7 +205,7 @@ export const JVController = {
     const query = `SELECT *
         FROM OPENQUERY(UNLIVE_LINK, '
             SELECT DISTINCT cTranNo FROM VOUCHER
-            WHERE cCompanyID = '002-00' and lCancelled = 0')`;
+            WHERE cCompanyID = ''002-00'' and lCancelled = 0')`;
     try {
       const result = await db.query(query);
       send(res).ok(result);
