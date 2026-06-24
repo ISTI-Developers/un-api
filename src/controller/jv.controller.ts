@@ -201,4 +201,16 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async getVouchers(req: Request, res: Response) {
+    const query = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT DISTINCT cTranNo FROM VOUCHER
+            WHERE cCompanyID = '002-00' and lCancelled = 0')`;
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 };
