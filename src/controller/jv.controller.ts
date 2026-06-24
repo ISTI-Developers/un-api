@@ -202,10 +202,25 @@ export const JVController = {
     }
   },
   async getVouchers(req: Request, res: Response) {
-    const query = `SELECT *
-        FROM OPENQUERY(UNLIVE_LINK, '
-            SELECT DISTINCT cTranNo FROM UN_LIVE.dbo.VOUCHER
-            WHERE cCompanyID = ''002-00'' and lCancelled = 0')`;
+    const search = String(req.query.search ?? "").trim();
+
+    if (search.length < 2) {
+      return send(res).ok([]);
+    }
+
+    const escapedSearch = search.replace(/'/g, "''");
+
+    const query = `
+    SELECT *
+    FROM OPENQUERY(UNLIVE_LINK, '
+      SELECT DISTINCT TOP 50 cTranNo
+      FROM UN_LIVE.dbo.VOUCHER
+      WHERE cCompanyID = ''002-00''
+        AND lCancelled = 0
+        AND cTranNo LIKE ''${escapedSearch}%''
+      ORDER BY cTranNo
+    ')
+  `;
     try {
       const result = await db.query(query);
       send(res).ok(result);
