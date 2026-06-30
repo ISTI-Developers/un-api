@@ -218,7 +218,7 @@ export const JVController = {
       WHERE cCompanyID = ''002-00''
         AND lCancelled = 0
         AND dDate >= ''2026-01-01''
-        AND cInvNo LIKE ''${escapedSearch}%''
+        AND cInvNo LIKE ''%${escapedSearch}%''
       ORDER BY cInvNo
     ')
   `;
