@@ -28,9 +28,9 @@ export const JVController = {
       A.cJobNo,
       A.dDueDate AS dueDateFrom,
       A.dDueDateTo AS dueDateTo,
-      A.cSiteID,
-      A.cStuctureID,
-      A.cStructureAddress,
+      -- A.cSiteID,
+      -- A.cStuctureID,
+      -- A.cStructureAddress,
       A.cAcctNo,
       A.cTitle,
       A.nAmount AS invoiceAmount,
@@ -201,7 +201,7 @@ export const JVController = {
       send(res).error(error);
     }
   },
-  async getVouchers(req: Request, res: Response) {
+  async getInvoice(req: Request, res: Response) {
     const search = String(req.query.search ?? "").trim();
 
     if (search.length < 2) {
@@ -213,12 +213,13 @@ export const JVController = {
     const query = `
     SELECT *
     FROM OPENQUERY(UNLIVE_LINK, '
-      SELECT DISTINCT TOP 50 cTranNo
-      FROM UN_LIVE.dbo.VOUCHER
+      SELECT DISTINCT TOP 50 cInvNo
+      FROM UN_LIVE.dbo.SALES
       WHERE cCompanyID = ''002-00''
         AND lCancelled = 0
-        AND cTranNo LIKE ''${escapedSearch}%''
-      ORDER BY cTranNo
+        AND dDate >= ''2026-01-01''
+        AND cInvNo LIKE ''${escapedSearch}%''
+      ORDER BY cInvNo
     ')
   `;
     try {
