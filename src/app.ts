@@ -16,7 +16,7 @@ const PORT = CONFIG.PORT || 8001;
 
 app.use(express.json());
 app.use(
-  cors({ origin: "*", exposedHeaders: ["X-Image-Width", "X-Image-Height"] }),
+  cors({ origin: "*", exposedHeaders: ["X-Image-Width", "X-Image-Height", "X-Orientation"] }),
 );
 app.use(express.text());
 app.use(express.json());
