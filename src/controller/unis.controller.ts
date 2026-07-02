@@ -303,7 +303,10 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
     if (!id) send(res).error("No id found.");
 
-    const [image] = await db.query("SELECT * FROM hd_file_upload WHERE upload_id = ?", [id]);
+    const [image] = await db.query(
+      "SELECT * FROM hd_file_upload WHERE upload_id = ?",
+      [id],
+    );
 
     if (image) {
       const path = image.upload_path;
@@ -311,7 +314,10 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
       const filePath = `https://192.168.10.10/unis/${path}`;
 
       try {
-        res.setHeader("Access-Control-Expose-Headers", "X-Image-Width, X-Image-Height");
+        res.setHeader(
+          "Access-Control-Expose-Headers",
+          "X-Image-Width, X-Image-Height",
+        );
         const response = await axios.get(filePath, {
           responseType: "arraybuffer",
           httpsAgent: agent,
@@ -324,7 +330,9 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
         res.setHeader("X-Image-Width", metadata.width || 0);
         res.setHeader("X-Image-Height", metadata.height || 0);
 
-        const outputBuffer = await sharp(buffer).webp({ quality: 100 }).toBuffer();
+        const outputBuffer = await sharp(buffer)
+          .webp({ quality: 100 })
+          .toBuffer();
 
         res.setHeader("Content-Type", "image/webp");
         res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
@@ -344,7 +352,10 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
     const filePath = `https://192.168.10.10/unis/${path}`;
 
     try {
-      res.setHeader("Access-Control-Expose-Headers", "X-Image-Width, X-Image-Height");
+      res.setHeader(
+        "Access-Control-Expose-Headers",
+        "X-Image-Width, X-Image-Height",
+      );
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
         httpsAgent: agent,
@@ -357,6 +368,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
       res.setHeader("X-Image-Width", metadata.width || 0);
       res.setHeader("X-Image-Height", metadata.height || 0);
+      res.setHeader("X-Orientation", metadata.orientation || 9);
 
       const outputBuffer = await image.jpeg({ quality: 100 }).toBuffer();
       res.setHeader("Content-Type", "image/jpeg");
@@ -371,7 +383,9 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   },
 
   async getAreas(_: Request, res: Response) {
-    const response = await db.query("SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;");
+    const response = await db.query(
+      "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;",
+    );
 
     send(res).ok(response);
   },
