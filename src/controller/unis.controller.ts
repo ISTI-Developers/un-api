@@ -354,7 +354,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
     try {
       res.setHeader(
         "Access-Control-Expose-Headers",
-        "X-Image-Width, X-Image-Height",
+        "X-Image-Width, X-Image-Height, X-Orientation",
       );
       const response = await axios.get(filePath, {
         responseType: "arraybuffer",
@@ -366,11 +366,12 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
       const image = sharp(buffer);
       const metadata = await image.metadata();
 
+      const orientation = metadata.orientation || 9;
       res.setHeader("X-Image-Width", metadata.width || 0);
       res.setHeader("X-Image-Height", metadata.height || 0);
-      res.setHeader("X-Orientation", metadata.orientation || 9);
-
-      const outputBuffer = await image.jpeg({ quality: 100 }).toBuffer();
+      res.setHeader("X-Orientation", orientation);
+      
+      const outputBuffer = await image.rotate().jpeg({ quality: 100 }).toBuffer();
       res.setHeader("Content-Type", "image/jpeg");
       res.setHeader("Content-Length", outputBuffer.length);
       res.setHeader("Cache-Control", "public, max-age=86400");
