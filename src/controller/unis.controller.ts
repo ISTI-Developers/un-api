@@ -246,63 +246,61 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
   async getSiteImages(req: Request, res: Response) {
     const site = req.params.site;
 
-    if (!site) send(res).error("No site code found.");
+    if (!site) return send(res).error("No site code found.");
 
-    let [structure, segment]: string[] = site!.split("-");
+    const imageLinks = await cache.remember(
+      `site-images:${site}`,
+      30 * 60 * 1000, // 30 minutes
+      async () => {
+        let [structure, segment] = site.split("-");
 
-    if (!structure || !segment) send(res).error("No site code found.");
+        if (!structure || !segment) throw new Error("No site code found.");
 
-    segment = structure === "3D" ? undefined : segment;
+        segment = structure === "3D" ? undefined : segment;
 
-    let query =
-      "SELECT s.structure_id, s.structure_code,CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, COALESCE(ss.image,s.image) as image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
+        let query =
+          "SELECT s.structure_id, s.structure_code, CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, COALESCE(ss.image,s.image) as image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
 
-    if (structure === "3D") {
-      query = query + " LIKE ?";
-    } else {
-      query = query + " = ?";
+        query += structure === "3D" ? " LIKE ?" : " = ?";
+
+        query = `SELECT image FROM (${query} AND ss.deleted = 0) A`;
+
+        const params = [structure];
+
+        if (segment) {
+          query += " WHERE segment_code = ?";
+          params.push(segment);
+        }
+
+        const [imageIDs] = await db.query<SiteImages>(query, params);
+
+        if (!imageIDs?.image) return [];
+
+        const IDs = imageIDs.image
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+
+        if (IDs.length === 0) return [];
+
+        const placeholders = IDs.map(() => "?").join(",");
+
+        return await db.query(
+          `SELECT *
+                 FROM hd_file_upload
+                 WHERE upload_id IN (${placeholders})
+                 AND upload_path NOT LIKE ?
+                 ORDER BY date_uploaded`,
+          [...IDs, `${structure}%`],
+        );
+      },
+    );
+
+    if (imageLinks.length === 0) {
+      return send(res).error("No images found for " + site, 204);
     }
-    query = `SELECT image FROM (${query} AND ss.deleted = 0) A `;
-    const params: string[] = [structure!];
-    if (segment) {
-      query = query + " WHERE segment_code = ?";
-      params.push(segment);
-    }
 
-    // console.log(query, params)
-    const [imageIDs] = await db.query<SiteImages>(query, params);
-    if (imageIDs) {
-      if (!imageIDs.image) {
-        send(res).error("No images found for " + site, 204);
-        return;
-      }
-
-      const IDs = imageIDs.image
-        .split(",")
-        .map((img: string) => img.trim())
-        .filter(Boolean); // remove empty values
-
-      if (IDs.length === 0) {
-        send(res).error("No valid image IDs found for " + site, 204);
-        return;
-      }
-
-      // Generate placeholders safely (e.g., ?, ?, ?)
-      const placeholders = IDs.map(() => "?").join(",");
-      const query = `
-    SELECT * 
-    FROM hd_file_upload 
-    WHERE upload_id IN (${placeholders})
-      AND upload_path NOT LIKE ?
-    ORDER BY date_uploaded;
-  `;
-
-      const params = [...IDs, `${structure}%`];
-      const imageLinks = await db.query(query, params);
-      send(res).ok(imageLinks);
-    } else {
-      send(res).ok("No images found for " + site);
-    }
+    send(res).ok(imageLinks);
   },
 
   async getImageThumbnail(req: Request, res: Response) {
@@ -310,48 +308,57 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
     if (!id) send(res).error("No id found.");
 
-    const [image] = await db.query(
-      "SELECT * FROM hd_file_upload WHERE upload_id = ?",
-      [id],
-    );
+    try {
+      res.setHeader(
+        "Access-Control-Expose-Headers",
+        "X-Image-Width, X-Image-Height, X-Orientation",
+      );
+      const imageBuffer = await cache.remember(
+        `image:${id}`,
+        24 * 60 * 60 * 1000,
+        async () => {
+          const [dbImage] = await db.query(
+            "SELECT * FROM hd_file_upload WHERE upload_id = ?",
+            [id],
+          );
 
-    if (image) {
-      const path = image.upload_path;
+          if (!dbImage) throw new Error("Image not found");
 
-      const filePath = `https://192.168.10.10/unis/${path}`;
+          const path = dbImage.upload_path;
+          const filePath = `https://192.168.10.10/unis/${path}`;
 
-      try {
-        res.setHeader(
-          "Access-Control-Expose-Headers",
-          "X-Image-Width, X-Image-Height",
-        );
-        const response = await axios.get(filePath, {
-          responseType: "arraybuffer",
-          httpsAgent: agent,
-        });
-        const buffer = Buffer.from(response.data);
+          const response = await axios.get(filePath, {
+            responseType: "arraybuffer",
+            httpsAgent: agent,
+          });
+          const buffer = Buffer.from(response.data);
 
-        const image = sharp(buffer);
-        const metadata = await image.metadata();
+          const image = sharp(buffer);
+          const metadata = await image.metadata();
 
-        res.setHeader("X-Image-Width", metadata.width || 0);
-        res.setHeader("X-Image-Height", metadata.height || 0);
+          const outputBuffer = await image
+            .rotate()
+            .webp({ quality: 100 })
+            .toBuffer();
 
-        const outputBuffer = await sharp(buffer)
-          .webp({ quality: 100 })
-          .toBuffer();
+          return {
+            buffer: outputBuffer,
+            width: metadata.width || 0,
+            height: metadata.height || 0,
+            orientation: metadata.orientation || 9,
+          };
+        },
+      );
 
-        res.setHeader("Content-Type", "image/webp");
-        res.setHeader("Cache-Control", "public, max-age=86400"); // cache 1 day
-        res.send(outputBuffer);
-        // res.setHeader("Content-Type", response.headers["content-type"]);
-        // res.send(response.data);
-      } catch (e) {
-        console.log(e);
-        res.status(404).send("Image not found");
-      }
-    } else {
-      send(res).error("No image found.");
+      res.setHeader("X-Image-Width", imageBuffer.width || 0);
+      res.setHeader("X-Image-Height", imageBuffer.height || 0);
+      res.setHeader("X-Orientation", imageBuffer.orientation);
+      res.setHeader("Content-Type", "image/webp");
+      res.setHeader("Content-Length", imageBuffer.buffer.length);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+    } catch (e) {
+      console.log(e);
+      res.status(404).send("Image not found");
     }
   },
   async getImageFile(req: Request, res: Response) {
