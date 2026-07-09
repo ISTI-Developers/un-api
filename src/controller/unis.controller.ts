@@ -356,6 +356,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
       res.setHeader("Content-Type", "image/webp");
       res.setHeader("Content-Length", imageBuffer.buffer.length);
       res.setHeader("Cache-Control", "public, max-age=86400");
+      res.send(imageBuffer.buffer);
     } catch (e) {
       console.log(e);
       res.status(404).send("Image not found");
