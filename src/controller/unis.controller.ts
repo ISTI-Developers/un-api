@@ -363,30 +363,42 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
         "Access-Control-Expose-Headers",
         "X-Image-Width, X-Image-Height, X-Orientation",
       );
-      const response = await axios.get(filePath, {
-        responseType: "arraybuffer",
-        httpsAgent: agent,
-      });
 
-      const buffer = Buffer.from(response.data);
+      const imageBuffer = await cache.remember(
+        `image:${path}`,
+        24 * 60 * 60 * 1000,
+        async () => {
+          const response = await axios.get(filePath, {
+            responseType: "arraybuffer",
+            httpsAgent: agent,
+          });
 
-      const image = sharp(buffer);
-      const metadata = await image.metadata();
+          const buffer = Buffer.from(response.data);
 
-      const orientation = metadata.orientation || 9;
-      res.setHeader("X-Image-Width", metadata.width || 0);
-      res.setHeader("X-Image-Height", metadata.height || 0);
-      res.setHeader("X-Orientation", orientation);
+          const image = sharp(buffer);
+          const metadata = await image.metadata();
 
-      const outputBuffer = await image
-        .rotate()
-        .jpeg({ quality: 100 })
-        .toBuffer();
+          const outputBuffer = await image
+            .rotate()
+            .jpeg({ quality: 100 })
+            .toBuffer();
+
+          return {
+            buffer: outputBuffer,
+            width: metadata.width || 0,
+            height: metadata.height || 0,
+            orientation: metadata.orientation || 9,
+          };
+        },
+      );
+      res.setHeader("X-Image-Width", imageBuffer.width || 0);
+      res.setHeader("X-Image-Height", imageBuffer.height || 0);
+      res.setHeader("X-Orientation", imageBuffer.orientation);
       res.setHeader("Content-Type", "image/jpeg");
-      res.setHeader("Content-Length", outputBuffer.length);
+      res.setHeader("Content-Length", imageBuffer.buffer.length);
       res.setHeader("Cache-Control", "public, max-age=86400");
 
-      res.send(outputBuffer);
+      res.send(imageBuffer.buffer);
     } catch (e) {
       console.log(e);
       res.status(404).send("Image not found");
