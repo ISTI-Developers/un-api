@@ -229,4 +229,85 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async getRevenueByInvoice(req: Request, res: Response) {
+    try {
+      const rawInvoiceNumbers = req.query.cInvNo;
+
+      const invoiceNumbers = (
+        Array.isArray(rawInvoiceNumbers)
+          ? rawInvoiceNumbers
+          : String(rawInvoiceNumbers ?? "").split(",")
+      )
+        .map((value) => String(value).trim())
+        .filter(Boolean);
+
+      const uniqueInvoiceNumbers = [...new Set(invoiceNumbers)];
+
+      if (uniqueInvoiceNumbers.length === 0) {
+        throw new Error("cInvNo is required.");
+      }
+
+      const invoiceList = uniqueInvoiceNumbers
+        .map((invoiceNumber) => {
+          const escapedInvoiceNumber = invoiceNumber.replace(/'/g, "''''");
+          return `''${escapedInvoiceNumber}''`;
+        })
+        .join(", ");
+
+      const query = `
+      SELECT *
+      FROM OPENQUERY(UNLIVE_LINK, '
+        SELECT
+          A.cInvNo, A.dDate AS invoiceDate,
+          A.cClientName, A.cSalesmanName,
+          A.cContractID, A.cJobNo,
+          A.dDueDate AS dueDateFrom, A.dDueDateTo AS dueDateTo,
+          A.cAcctNo, A.cTitle,
+          A.nAmount AS invoiceAmount, B.cTranNo AS orNumber,
+          B.nApplied AS orAmount, D.dDate AS orDate,
+          C.cTranNo AS cmdmTransactionNo, C.nAmount AS cmdmAmount,
+          A.cLocation, E.cBrandName,
+          A.cGroupName, A.cReportGroup
+        FROM UN_LIVE.dbo.TFN_JV_REVENUE(
+          ''002-00'',
+          ''1900-01-01'',
+          ''2999-12-31'',
+          ''Sales Invoice''
+        ) A
+        LEFT OUTER JOIN UN_LIVE.dbo.PR_T B
+          ON A.cCompanyID = B.cCompanyID
+          AND A.cInvNo = B.cInvNo
+          AND A.cContractID = B.cContractID
+          AND A.cJobNo = B.cJobNo
+          AND A.dDueDate = B.dDueDateFrom
+        LEFT OUTER JOIN UN_LIVE.dbo.PR D
+          ON B.cCompanyID = D.cCompanyID
+          AND B.cTranNo = D.cTranNo
+        LEFT OUTER JOIN UN_LIVE.dbo.TFN_JV_REVENUE(
+          ''002-00'',
+          ''1900-01-01'',
+          ''2999-12-31'',
+          ''Credit Memo''
+        ) C
+          ON A.cInvNo = C.cInvNo
+          AND A.cJobNo = C.cJobNo
+          AND A.dDueDate = C.dDueDate
+          AND A.cStuctureID = C.cStuctureID
+        LEFT OUTER JOIN UN_LIVE.dbo.CONTRACT_T E
+          ON A.cCompanyID = E.cCompanyID
+          AND A.cContractID = E.cContractID_HDI
+          AND A.cJobNo = E.cJobNo
+          AND A.cStuctureID = E.cStructureID
+          AND A.cSiteID = E.cSiteID
+        WHERE A.cInvNo IN (${invoiceList})
+          AND ISNULL(C.cTranNo, '''') = ''''
+      ')
+    `;
+
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 };
