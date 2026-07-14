@@ -250,10 +250,11 @@ export const JVController = {
       const escapedInvoiceList = invoiceList.replace(/'/g, "''");
       const remoteQuery = `
       SELECT *
+      FROM OPENQUERY(UNLIVE_LINK, '
+      SELECT *
       FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List(
         '${escapedInvoiceList}'
-      )
-    `;
+      )')`;
       const escapedRemoteQuery = remoteQuery.replace(/'/g, "''");
       const query = `
       SELECT *
