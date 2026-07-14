@@ -270,7 +270,7 @@ export const JVController = {
           A.cGroupName, A.cReportGroup
         FROM UN_LIVE.dbo.TFN_JV_REVENUE(
           ''002-00'',
-          ''1900-01-01'',
+          ''2026-01-01'',
           ''2999-12-31'',
           ''Sales Invoice''
         ) A
@@ -285,7 +285,7 @@ export const JVController = {
           AND B.cTranNo = D.cTranNo
         LEFT OUTER JOIN UN_LIVE.dbo.TFN_JV_REVENUE(
           ''002-00'',
-          ''1900-01-01'',
+          ''2026-01-01'',
           ''2999-12-31'',
           ''Credit Memo''
         ) C
