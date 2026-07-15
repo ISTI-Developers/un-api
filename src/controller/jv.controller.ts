@@ -230,29 +230,12 @@ export const JVController = {
     }
   },
   async getRevenueByInvoice(req: Request, res: Response) {
-    const cInvNo = String(req.query.cInvNo ?? "");
-
-    if (!cInvNo) {
-      throw new Error("cInvNo is required.");
-    }
-
-    const invoiceList = cInvNo
-      .split(",")
-      .map((invoiceNumber) => `'${invoiceNumber.replace(/'/g, "''")}'`)
-      .join(",");
-
-    const escapedInvoiceList = invoiceList.replace(/'/g, "''''");
-
     const query = `
     SELECT *
     FROM OPENQUERY(UNLIVE_LINK, '
       SELECT *
-      FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List(
-        ''${escapedInvoiceList}''
-      )
-    ')
+      FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List('SI-2608900','SI-2608901')')
   `;
-
     try {
       const result = await db.query(query);
       send(res).ok(result);
@@ -260,6 +243,5 @@ export const JVController = {
       send(res).error(error);
     }
   },
-
 
 };
