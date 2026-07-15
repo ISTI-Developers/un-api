@@ -234,7 +234,7 @@ export const JVController = {
     SELECT *
     FROM OPENQUERY(UNLIVE_LINK, '
       SELECT *
-      FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List(''SI-2608900'')')
+      FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List("'SI-2608900','SI-2608901'")')
   `;
     try {
       const result = await db.query(query);
