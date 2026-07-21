@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { MSSQL } from "../config/db";
 import { send } from "../utils/helper";
+import { cache } from "../utils/cache";
 
 const db = new MSSQL();
 
@@ -244,4 +245,23 @@ export const JVController = {
     }
   },
 
+  async getCustomerAging(req: Request, res: Response) {
+    const query = `SELECT *
+          FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT * FROM UN_LIVE.dbo.Get_Aging_Customer(''002-00'',''06/01/2026'',''06/30/2026'',NULL)
+             ORDER BY cName')`;
+    try {
+      const result = await cache.remember(
+        "CUSTOMER-AGE",
+        24 * 60 * 60 * 1000,
+        async () => {
+          const response = await db.query(query);
+          return response;
+        },
+      );
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 };
