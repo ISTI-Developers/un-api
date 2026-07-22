@@ -231,17 +231,39 @@ export const JVController = {
     }
   },
   async getRevenueByInvoice(req: Request, res: Response) {
-    const query = `
-    SELECT *
-    FROM OPENQUERY(UNLIVE_LINK, '
-      SELECT *
-      FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List('SI-2608900','SI-2608901')')
-  `;
     try {
+      const cInvNo = req.query.cInvNo;
+      if (typeof cInvNo !== 'string' || cInvNo.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'cInvNo is required.',
+        });
+      }
+      const invoices = cInvNo.split(',');
+      const hasInvalidInvoice = invoices.some(
+        (invoice) => !/^[A-Za-z0-9-]+$/.test(invoice)
+      );
+      if (hasInvalidInvoice) {
+        return res.status(400).json({
+          success: false,
+          error: 'One or more invoice numbers are invalid.',
+        });
+      }
+      const inv = invoices.join(',');
+      const escapedInv = inv.replace(/'/g, "''");
+      const query = `
+      SELECT *
+      FROM OPENQUERY(UNLIVE_LINK, '
+        SELECT *
+        FROM UN_LIVE.dbo.Get_JV_Revenue_Invoice_List(
+          ''${escapedInv}''
+        )
+      ')
+    `;
       const result = await db.query(query);
-      send(res).ok(result);
+      return send(res).ok(result);
     } catch (error) {
-      send(res).error(error);
+      return send(res).error(error);
     }
   },
 
