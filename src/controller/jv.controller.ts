@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { MSSQL } from "../config/db";
+import { MSSQL, MySQL } from "../config/db";
 import { send } from "../utils/helper";
 import { cache } from "../utils/cache";
+import { format } from "date-fns";
 
 const db = new MSSQL();
 
@@ -233,23 +234,23 @@ export const JVController = {
   async getRevenueByInvoice(req: Request, res: Response) {
     try {
       const cInvNo = req.query.cInvNo;
-      if (typeof cInvNo !== 'string' || cInvNo.length === 0) {
+      if (typeof cInvNo !== "string" || cInvNo.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'cInvNo is required.',
+          error: "cInvNo is required.",
         });
       }
-      const invoices = cInvNo.split(',');
+      const invoices = cInvNo.split(",");
       const hasInvalidInvoice = invoices.some(
-        (invoice) => !/^[A-Za-z0-9-]+$/.test(invoice)
+        (invoice) => !/^[A-Za-z0-9-]+$/.test(invoice),
       );
       if (hasInvalidInvoice) {
         return res.status(400).json({
           success: false,
-          error: 'One or more invoice numbers are invalid.',
+          error: "One or more invoice numbers are invalid.",
         });
       }
-      const inv = invoices.join(',');
+      const inv = invoices.join(",");
       const escapedInv = inv.replace(/'/g, "''");
       const query = `
       SELECT *
@@ -268,17 +269,44 @@ export const JVController = {
   },
 
   async getCustomerAging(req: Request, res: Response) {
+    const from = req.query.from ?? format(new Date(), "MM/dd/yyyy");
+    const to = req.query.to ?? format(new Date(), "MM/dd/yyyy");
+
+    const unisdb = new MySQL({
+      host: "192.168.10.10",
+      user: "oamsun",
+      password: "Oams@UN",
+      database: "oams-un",
+      port: 3306,
+    });
+
+    const unis_customers_query = `SELECT DISTINCT customer_name as cName FROM hd_customer WHERE deleted = 0;`;
     const query = `SELECT *
           FROM OPENQUERY(UNLIVE_LINK, '
-            SELECT * FROM UN_LIVE.dbo.Get_Aging_Customer(''002-00'',''06/01/2026'',''06/30/2026'',NULL)
+            SELECT * FROM UN_LIVE.dbo.Get_Aging_Customer(''002-00'',''${from}'',''${to}'',NULL)
              ORDER BY cName')`;
+    const qnequery = `SELECT CompanyCode,CompanyName,MAX(AgeDays) LastAgeDay
+FROM QFN_GetCustomerAging('${from}',0,1,'Month','12','-2','-2',0,'',null,null,null,null,null,null,null,null,null,null)
+GROUP BY CompanyCode,CompanyName`;
     try {
       const result = await cache.remember(
-        "CUSTOMER-AGE",
+        `CUSTOMER [${from}-${to}]`,
         24 * 60 * 60 * 1000,
         async () => {
           const response = await db.query(query);
-          return response;
+          const qneResponse = await db.query(qnequery);
+          const customers = await unisdb.query(unis_customers_query);
+
+          const communion = new Map(response.map((a) => [a.cName, a.nDayAge]));
+          const qne = new Map(
+            qneResponse.map((a) => [a.CompanyName, a.LastAgeDay]),
+          );
+
+          const result = customers.map((client) => ({
+            ...client,
+            nDayAge: communion.get(client.cName) ?? qne.get(client.name) ?? 0,
+          }));
+          return result;
         },
       );
       send(res).ok(result);
