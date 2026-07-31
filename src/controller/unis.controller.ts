@@ -388,7 +388,12 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND st.status_id IN (1,2)
 
           const outputBuffer = await image
             .rotate()
-            .webp({ quality: 85 })
+            .jpeg({
+              quality: 85,
+              mozjpeg: true,
+              progressive: true,
+              chromaSubsampling: "4:2:0",
+            })
             .toBuffer();
 
           return {
