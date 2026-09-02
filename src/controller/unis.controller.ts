@@ -452,7 +452,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
     const response = await db.query(
       `SELECT A.structure_id, A.structure_code, A.address AS cLocation
         FROM hd_structure A
-        WHERE A.category_id = 4
+        WHERE A.category_id = 4 AND inactive = 0
           AND A.deleted = 0
           AND EXISTS (
             SELECT 1
