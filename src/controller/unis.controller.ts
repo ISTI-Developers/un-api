@@ -226,7 +226,6 @@ ORDER BY division_id ASC , structure ASC , site ASC`);
     send(res).ok(rows);
   },
   async getLatestSites(req: Request, res: Response) {
-
     const response = await db.query(
       `SELECT * FROM(
 SELECT s.structure_id, s.structure_code, COALESCE(CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')),CONCAT(s.structure_code,'-','XXXXX')) as site_code, ac.city_name as city, ad.division_name as region, s.address, ss.latitude, ss.longitude, sc.category as site_owner, CONCAT(ss.height," x ", ss.width) as size, s.vicinity_population, s.traffic_count,CONCAT(ss.facing, ' (',ss.segment_description,')') as board_facing, s.traffic as bound, COALESCE(COALESCE(ss.date_modified, s.date_created), ss.date_created) as date_created FROM hd_structure s 
@@ -336,8 +335,14 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
           const metadata = await image.metadata();
 
           const outputBuffer = await image
+            .resize({
+              width: 800,
+              height: 450,
+              fit: "cover",
+              withoutEnlargement: true,
+            })
             .rotate()
-            .webp({ quality: 70 })
+            .webp({ quality: 65 })
             .toBuffer();
 
           return {
