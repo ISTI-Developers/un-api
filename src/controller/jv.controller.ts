@@ -152,6 +152,77 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async getLocations(_: Request, res: Response) {
+    const unisdb = new MySQL({
+      host: "192.168.10.10",
+      user: "oamsun",
+      password: "Oams@UN",
+      database: "oams-un",
+      port: 3306,
+    });
+
+    const jvQuery = `SELECT *
+        FROM OPENQUERY(UNLIVE_LINK, '
+            SELECT DISTINCT cAddress FROM UN_LIVE.dbo.JointVenture_T')`;
+    const unisQuery = `SELECT A.structure_id, A.structure_code, A.address AS cLocation
+        FROM hd_structure A
+        WHERE A.category_id = 4 AND inactive = 0
+          AND A.deleted = 0
+          AND EXISTS (
+            SELECT 1
+            FROM hd_structure_owned B
+            INNER JOIN hd_structure_owner C ON B.owner_id = C.owner_id
+            WHERE B.structure_id = A.structure_id
+              AND B.deleted = 0
+              AND C.deleted = 0
+          )
+        ORDER BY A.structure_id ASC`;
+
+    const cleanLocation = (location: unknown) =>
+      typeof location === "string" ? location.trim().replace(/\s+/g, " ") : "";
+
+    try {
+      const unisLocations = await unisdb.query(unisQuery);
+      const jvLocations = await db.query(jvQuery);
+      const locations = new Map<
+        string,
+        {
+          structure_id: number | null;
+          structure_code: string | null;
+          cLocation: string;
+        }
+      >();
+
+      for (const location of unisLocations) {
+        const cLocation = cleanLocation(location.cLocation);
+
+        if (cLocation) {
+          locations.set(cLocation.toLowerCase(), {
+            structure_id: location.structure_id,
+            structure_code: location.structure_code,
+            cLocation,
+          });
+        }
+      }
+
+      for (const location of jvLocations) {
+        const cLocation = cleanLocation(location.cAddress);
+        const key = cLocation.toLowerCase();
+
+        if (cLocation && !locations.has(key)) {
+          locations.set(key, {
+            structure_id: null,
+            structure_code: null,
+            cLocation,
+          });
+        }
+      }
+
+      send(res).ok(Array.from(locations.values()));
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
 
   async getTotalRealizedRevenue(req: Request, res: Response) {
     const from = req.query.from;

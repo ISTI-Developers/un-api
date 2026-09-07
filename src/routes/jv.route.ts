@@ -21,7 +21,7 @@ router.get("/getTotalRealizedRevenue", JVController.getTotalRealizedRevenue);
 router.get("/getOperatingExpense", JVController.getOperatingExpense);
 
 router.get("/getRevenueOfJV", UnisController.getRevenueOfJV);
-router.get("/getLocations", UnisController.getLocations);
+router.get("/getLocations", JVController.getLocations);
 
 router.get("/customer/age", JVController.getCustomerAging);
 
