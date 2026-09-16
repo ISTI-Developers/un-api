@@ -40,6 +40,31 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async refreshCollectionMemo(req: Request, res: Response) {
+    const ref_id = String(req.query.ref_id ?? "").trim();
+
+    if (!ref_id) {
+      throw new Error("Reference ID is required.");
+    }
+
+    const safeRefId = ref_id.replace(/'/g, "''");
+
+    const query = `
+    EXEC SP_RefereshCollectionMemo 'AR', '${safeRefId}';
+    EXEC SP_RefereshCollectionMemo 'OR', '${safeRefId}';
+  `;
+
+    try {
+      const result = await db.query(query);
+
+      send(res).ok({
+        ref_id,
+        result,
+      });
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
   async getExpenses(req: Request, res: Response) {
     const from = req.query.from;
     const to = req.query.to;
