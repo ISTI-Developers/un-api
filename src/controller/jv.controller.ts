@@ -300,6 +300,37 @@ export const JVController = {
       send(res).error(error);
     }
   },
+  async getVoucher(req: Request, res: Response) {
+    const search = String(req.query.search ?? "").trim();
+
+    if (search.length < 2) {
+      return send(res).ok([]);
+    }
+
+    const escapedSearch = search.replace(/'/g, "''");
+
+    const query = `
+    SELECT *
+    FROM OPENQUERY(UNLIVE_LINK, '
+      SELECT DISTINCT TOP 50 cTranNo
+      FROM UN_LIVE.dbo.VOUCHER
+      WHERE cCompanyID = ''002-00''
+        AND lCancelled = 0
+        AND dDate >= ''2026-01-01''
+        AND cTranNo LIKE ''%${escapedSearch}%''
+      ORDER BY cTranNo
+
+    ')
+  `;
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+
+
   async getRevenueByInvoice(req: Request, res: Response) {
     try {
       const cInvNo = req.query.cInvNo;
@@ -336,7 +367,53 @@ export const JVController = {
       return send(res).error(error);
     }
   },
+  async getExpenseByVoucher(req: Request, res: Response) {
+    try {
+      const cTranNo = req.query.cTranNo;
 
+      if (typeof cTranNo !== "string" || cTranNo.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "cTranNo is required.",
+        });
+      }
+
+      const transactions = cTranNo
+        .split(",")
+        .map((transaction) => transaction.trim())
+        .filter(Boolean);
+
+      const hasInvalidTransaction = transactions.some(
+        (transaction) => !/^[A-Za-z0-9-]+$/.test(transaction),
+      );
+
+      if (hasInvalidTransaction) {
+        return res.status(400).json({
+          success: false,
+          error: "One or more transaction numbers are invalid.",
+        });
+      }
+
+      const tranNo = transactions.join(",");
+      const escapedTranNo = tranNo.replace(/'/g, "''");
+
+      const query = `
+      SELECT *
+      FROM OPENQUERY(UNLIVE_LINK, '
+        SELECT *
+        FROM UN_LIVE.dbo.Get_JV_Expense_Transaction_List(
+          ''${escapedTranNo}''
+        )
+      ')
+    `;
+
+      const result = await db.query(query);
+
+      return send(res).ok(result);
+    } catch (error) {
+      return send(res).error(error);
+    }
+  },
   async getCustomerAging(req: Request, res: Response) {
     const from = req.query.from ?? format(new Date(), "MM/dd/yyyy");
     const to = req.query.to ?? format(new Date(), "MM/dd/yyyy");
