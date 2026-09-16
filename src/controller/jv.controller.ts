@@ -50,12 +50,13 @@ export const JVController = {
     const safeRefId = ref_id.replace(/'/g, "''");
 
     const query = `
-    SELECT *
-    FROM OPENQUERY(
-      UNLIVE_LINK,
-      'EXEC UN_LIVE.dbo.SP_RefereshCollectionMemo ''AR'', ''${safeRefId}'';
-       EXEC UN_LIVE.dbo.SP_RefereshCollectionMemo ''OR'', ''${safeRefId}'';'
-    )
+    EXEC [UNLIVE_LINK].[UN_LIVE].[dbo].[SP_RefereshCollectionMemo]
+      'AR',
+      '${safeRefId}';
+
+    EXEC [UNLIVE_LINK].[UN_LIVE].[dbo].[SP_RefereshCollectionMemo]
+      'OR',
+      '${safeRefId}';
   `;
 
     try {
