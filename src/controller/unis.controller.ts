@@ -21,7 +21,7 @@ interface SiteImages extends ResultSetHeader {
 
 export const UnisController = {
   async getAvailableSites(_: Request, res: Response) {
-    const rows = await db.query(`SELECT 
+    const rows = await db.select(`SELECT 
     structure,
     site,
     category,
@@ -201,7 +201,7 @@ ORDER BY division_id ASC , structure ASC , site ASC`);
       "site-rentals",
       24 * 60 * 60 * 1000,
       async () => {
-        return await db.query(`SELECT s.structure_code, CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment, 2, '0')) as site_code, A.net_contract_amount, A.payment_term_id FROM (
+        return await db.select(`SELECT s.structure_code, CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment, 2, '0')) as site_code, A.net_contract_amount, A.payment_term_id FROM (
           SELECT lc2.lease_contract_id, lc2.structure_id, lpd.date_from, lpd.date_to, COALESCE(lpd.contract_amount, lc3.net_contract_amount) AS net_contract_amount, lc3.payment_term_id FROM (
           SELECT MAX(lc.lease_contract_id) AS lease_contract_id, lc1.structure_id FROM hd_lease_contract lc JOIN (
           SELECT s.structure_id, MAX(lc.date_to) as date_to 
@@ -226,7 +226,7 @@ ORDER BY division_id ASC , structure ASC , site ASC`);
     send(res).ok(rows);
   },
   async getLatestSites(req: Request, res: Response) {
-    const response = await db.query(
+    const response = await db.select(
       `SELECT * FROM(
 SELECT s.structure_id, s.structure_code, COALESCE(CONCAT(s.structure_code, '-', ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')),CONCAT(s.structure_code,'-','XXXXX')) as site_code, ac.city_name as city, ad.division_name as region, s.address, ss.latitude, ss.longitude, sc.category as site_owner, CONCAT(ss.height," x ", ss.width) as size, s.vicinity_population, s.traffic_count,CONCAT(ss.facing, ' (',ss.segment_description,')') as board_facing, s.traffic as bound, COALESCE(COALESCE(ss.date_modified, s.date_created), ss.date_created) as date_created FROM hd_structure s 
 LEFT JOIN hd_structure_segment ss ON s.structure_id = ss.structure_id 
@@ -270,7 +270,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
           params.push(segment);
         }
 
-        const [imageIDs] = await db.query<SiteImages>(query, params);
+        const [imageIDs] = await db.select<SiteImages>(query, params);
 
         if (!imageIDs?.image) return [];
 
@@ -283,7 +283,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
 
         const placeholders = IDs.map(() => "?").join(",");
 
-        return await db.query(
+        return await db.select(
           `SELECT *
                  FROM hd_file_upload
                  WHERE upload_id IN (${placeholders})
@@ -315,8 +315,8 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
         `image:${id}`,
         24 * 60 * 60 * 1000,
         async () => {
-          const [dbImage] = await db.query(
-            "SELECT * FROM hd_file_upload WHERE upload_id = ?",
+          const [dbImage] = await db.select<{ upload_path: string }>(
+            "SELECT upload_path FROM hd_file_upload WHERE upload_id = ?",
             [id],
           );
 
@@ -423,7 +423,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
   },
 
   async getAreas(_: Request, res: Response) {
-    const response = await db.query(
+    const response = await db.select(
       "SELECT city_id, city_code, city_name FROM hd_ad_city ORDER BY city_name ASC;",
     );
 
@@ -432,7 +432,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
 
   // JV MICROSITE RELATED
   async getRevenueOfJV(_: Request, res: Response) {
-    const response = await db.query(
+    const response = await db.select(
       `SELECT A.invoice_id,C.job_number, B.reference_date,
          D.address,
          CASE WHEN B.subcustomer_id = '' or B.subcustomer_id is null or B.subcustomer_id = 0 THEN 
@@ -454,7 +454,7 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
     send(res).ok(response);
   },
   async getLocations(_: Request, res: Response) {
-    const response = await db.query(
+    const response = await db.select(
       `SELECT A.structure_id, A.structure_code, A.address AS cLocation
         FROM hd_structure A
         WHERE A.category_id = 4 AND inactive = 0

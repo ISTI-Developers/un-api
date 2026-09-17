@@ -180,7 +180,7 @@ export const JVController = {
       typeof location === "string" ? location.trim().replace(/\s+/g, " ") : "";
 
     try {
-      const unisLocations = await unisdb.query(unisQuery);
+      const unisLocations = await unisdb.select<any>(unisQuery);
       const jvLocations = await db.query(jvQuery);
       const locations = new Map<
         string,
@@ -330,7 +330,6 @@ export const JVController = {
     }
   },
 
-
   async getRevenueByInvoice(req: Request, res: Response) {
     try {
       const cInvNo = req.query.cInvNo;
@@ -441,7 +440,7 @@ GROUP BY CompanyCode,CompanyName`;
         async () => {
           const response = await db.query(query);
           const qneResponse = await db.query(qnequery);
-          const customers = await unisdb.query(unis_customers_query);
+          const customers = await unisdb.select<any>(unis_customers_query);
 
           const communion = new Map(response.map((a) => [a.cName, a.nDayAge]));
           const qne = new Map(

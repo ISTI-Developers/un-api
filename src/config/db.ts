@@ -1,6 +1,10 @@
-import mysql, { Pool, PoolOptions } from "mysql2/promise";
+import mysql, {
+  Pool,
+  PoolOptions,
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2/promise";
 import sql, { ConnectionPool, IResult } from "mssql";
-import { CONFIG } from "./config";
 interface DatabaseConfig extends PoolOptions {
   host?: string;
   user?: string;
@@ -47,12 +51,14 @@ export class MySQL {
     );
   }
 
-  async query<T extends mysql.ResultSetHeader = any>(
-    sql: string,
-    params?: any[],
-  ): Promise<T[]> {
-    const [rows] = await this.pool.query<T[]>(sql, params);
-    return rows;
+  async select<T>(sql: string, params?: any[]): Promise<T[]> {
+    const [rows] = await this.pool.query(sql, params);
+    return rows as T[];
+  }
+
+  async execute(sql: string, params?: any[]): Promise<ResultSetHeader> {
+    const [result] = await this.pool.execute<ResultSetHeader>(sql, params);
+    return result;
   }
 
   // Close pool gracefully
