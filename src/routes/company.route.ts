@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/test", CompanyController.test);
 
-router.get("/", CompanyController.getCompanies);
+router.get("/companies", CompanyController.getCompanies);
 
 router.get("/departments", CompanyController.getDepartments);
 

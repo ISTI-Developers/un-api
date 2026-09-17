@@ -40,7 +40,7 @@ export const AuthController = {
   async register(req: Request, res: Response) {
     const data: RegisterCredentials = req.body;
 
-    const password = hashPassword(String(data.employee_id));
+    const password = await hashPassword(String(data.employee_id));
 
     const userRes = await db.execute(
       "INSERT INTO un_users (employee_id, first_name, last_name, middle_name, company_id, department_id, unit_id, position, type_id, classification_id, status) VALUES (?,?,?,?,?,?,?,?,?,?,1)",
@@ -59,10 +59,9 @@ export const AuthController = {
     );
     if (userRes?.insertId) {
       const newId = userRes.insertId;
-
-      const accountRes = await db.execute(
-        "INSERT INTO un_accounts (user_id, username, email, password, role_id) VALUES (?,?,?,?,?)",
-        [newId, data.employee_id, data.email, password],
+      
+      const accountRes = await db.execute("INSERT INTO un_accounts (user_id, email, password) VALUES (?,?,?)",
+        [newId, data.email, password],
       );
       if (accountRes?.affectedRows) {
         send(res).ok("User has been created successfully.");
