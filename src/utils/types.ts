@@ -1,16 +1,26 @@
-export type LoginCredentials = {
-  username: string;
-  email_address: string;
-  password: string;
+export type UserSummary = {
+  user_id: number;
+  name: string;
+  position: string;
+  company_id: number;
+  department_id?: number;
+  unit_id?: number;
 };
 
-export interface RegisterCredentials extends LoginCredentials {
-  employee_no: string;
+export type LoginCredentials = {
+  username: string;
+  password: string;
+  rememberMe: boolean;
+};
+
+export interface RegisterCredentials {
+  employee_id: string;
   first_name: string;
   last_name: string;
   middle_name: string;
-  role_id: number;
-  alias?: string;
+  email: string;
+  // role_id: number;
+  // alias?: string;
   company_id: number;
   department_id?: number;
   unit_id?: number;

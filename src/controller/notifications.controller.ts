@@ -42,7 +42,7 @@ export const NotificationController = {
       send(res).error("User ID not found.");
     }
 
-    const notifications = await db.query<Notification>(
+    const notifications = await db.select<Notification>(
       "SELECT pn.*, pr.user_id, pr.read_at FROM push_notifications pn LEFT JOIN push_receipts pr ON pn.ID = pr.notification_id WHERE pn.platform = 'sales';",
     );
     if (notifications.length > 0) {
@@ -66,7 +66,7 @@ export const NotificationController = {
     const { subscription, user_id, platform } = data;
     const { endpoint, keys } = JSON.parse(subscription);
 
-    await db.query(
+    await db.select(
       "INSERT INTO push_subscriptions (endpoint, p256dh, auth, user_id, platform) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE endpoint = endpoint",
       [endpoint, keys.p256dh, keys.auth, user_id, platform],
     );
@@ -80,14 +80,14 @@ export const NotificationController = {
     const query =
       "INSERT INTO push_notifications (title, body, url, tag, platform, recipients, created_at) VALUES (?,?,?,?,?,?,?)";
     const recipients = JSON.stringify(body.recipients);
-    await db.query(query, [
+    await db.execute(query, [
       body.title,
       body.body,
       body.data.url,
       body.tag,
       body.platform,
       recipients,
-      format(new Date(),"yyyy-MM-dd HH:mm:ss"),
+      format(new Date(), "yyyy-MM-dd HH:mm:ss"),
     ]);
     send(res).ok({ acknowledged: true, message: "Notification saved." });
   },
@@ -106,7 +106,7 @@ export const NotificationController = {
         ` WHERE user_id IN (${Array(recipients.length).fill("?").join(", ")})`;
       params = recipients;
     }
-    const subscriptions = await db.query<Subscription>(query, params);
+    const subscriptions = await db.select<Subscription>(query, params);
     const results = await Promise.allSettled(
       subscriptions.map((sub) =>
         webpush.sendNotification(
@@ -132,7 +132,11 @@ export const NotificationController = {
 
     const query =
       "INSERT INTO push_receipts (notification_id, user_id, read_at) VALUES (?,?,?)";
-    await db.query(query, [body.notification_id, body.user_id, format(new Date(),"yyyy-MM-dd HH:mm:ss")]);
+    await db.execute(query, [
+      body.notification_id,
+      body.user_id,
+      format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+    ]);
     send(res).ok({ acknowledged: true, message: "Receipt saved." });
   },
 };

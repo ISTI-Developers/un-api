@@ -9,20 +9,20 @@ export const CompanyController = {
     res.status(200).send({ message: "Company is accessible" });
   },
   async getCompanies(req: Request, res: Response) {
-    const rows = await db.query(
-      "SELECT company_id, name, alias FROM un_companies WHERE status <> 0"
+    const rows = await db.select(
+      "SELECT company_id, name, alias, date_created, status FROM un_companies",
     );
     send(res).ok(rows);
   },
   async getDepartments(req: Request, res: Response) {
-    const rows = await db.query(
-      "SELECT company_id, department_id, name, alias FROM un_company_departments WHERE status <> 0"
+    const rows = await db.select(
+      "SELECT company_id, department_id, name, alias,date_created, status FROM un_company_departments",
     );
     send(res).ok(rows);
   },
   async getUnits(req: Request, res: Response) {
-    const rows = await db.query(
-      "SELECT company_id, department_id, unit_id, name, alias FROM un_company_units WHERE status <> 0"
+    const rows = await db.select(
+      "SELECT company_id, department_id, unit_id, name, alias, date_created, status FROM un_company_units",
     );
     send(res).ok(rows);
   },

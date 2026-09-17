@@ -4,19 +4,19 @@ import bcrypt from "bcrypt";
 import { ResultSetHeader } from "mysql2";
 
 export interface JwtPayload extends ResultSetHeader {
-  account_id: number;
-  username: string;
+  user_id: number;
+  employee_id: string;
   email: string;
   password: string;
-  attempts: number;
+  expires_at: StringValue;
 }
-type StringValue = `${number}${"s" | "m" | "h" | "d" | "y"}`;
+export type StringValue = `${number}${"s" | "m" | "h" | "d" | "y"}`;
 
 const SALT_ROUNDS = 12; // 10-12 is common; increase for more security (slower)
 
 export function signToken(payload: JwtPayload): string {
   const options: SignOptions = {
-    expiresIn: CONFIG.JWT_EXPIRES_IN as StringValue,
+    expiresIn: payload.expires_at,
   };
   return jwt.sign(payload, CONFIG.JWT_SECRET, options);
 }
