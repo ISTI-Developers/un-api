@@ -368,40 +368,38 @@ export const JVController = {
   },
   async getExpenseByVoucher(req: Request, res: Response) {
     try {
-      const cTranNo = req.query.cTranNo;
+      const ReferenceID = req.query.ReferenceID;
 
-      if (typeof cTranNo !== "string" || cTranNo.trim().length === 0) {
+      if (
+        typeof ReferenceID !== "string" ||
+        ReferenceID.trim().length === 0
+      ) {
         return res.status(400).json({
           success: false,
-          error: "cTranNo is required.",
+          error: "ReferenceID is required.",
         });
       }
 
-      const transactions = cTranNo
-        .split(",")
-        .map((transaction) => transaction.trim())
-        .filter(Boolean);
+      const referenceId = ReferenceID.trim();
 
-      const hasInvalidTransaction = transactions.some(
-        (transaction) => !/^[A-Za-z0-9-]+$/.test(transaction),
-      );
+      const isValidReferenceId =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
+          referenceId,
+        );
 
-      if (hasInvalidTransaction) {
+      if (!isValidReferenceId) {
         return res.status(400).json({
           success: false,
-          error: "One or more transaction numbers are invalid.",
+          error: "ReferenceID is invalid.",
         });
       }
-
-      const tranNo = transactions.join(",");
-      const escapedTranNo = tranNo.replace(/'/g, "''");
 
       const query = `
       SELECT *
       FROM OPENQUERY(UNLIVE_LINK, '
         SELECT *
         FROM UN_LIVE.dbo.Get_JV_Expense_Transaction_List(
-          ''${escapedTranNo}''
+          ''${referenceId}''
         )
       ')
     `;
