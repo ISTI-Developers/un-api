@@ -312,7 +312,7 @@ export const JVController = {
     const query = `
     SELECT *
     FROM OPENQUERY(UNLIVE_LINK, '
-      SELECT cTranNo, cLocation, cGroupName, cAcctNo
+      SELECT cTranNo, cLocation, cGroupName, cAcctNo, ReferenceID
       FROM UN_LIVE.dbo.Get_JV_Expense_Transaction_List(NULL)
       WHERE dDate >= ''01/01/2026''
         AND cTranNo LIKE ''%${escapedSearch}%''
