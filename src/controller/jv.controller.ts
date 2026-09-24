@@ -312,14 +312,11 @@ export const JVController = {
     const query = `
     SELECT *
     FROM OPENQUERY(UNLIVE_LINK, '
-      SELECT DISTINCT TOP 50 cTranNo
-      FROM UN_LIVE.dbo.VOUCHER
-      WHERE cCompanyID = ''002-00''
-        AND lCancelled = 0
-        AND dDate >= ''2026-01-01''
+      SELECT cTranNo, cLocation, cGroupName, cAcctNo
+      FROM UN_LIVE.dbo.Get_JV_Expense_Transaction_List(NULL)
+      WHERE dDate >= ''01/01/2026''
         AND cTranNo LIKE ''%${escapedSearch}%''
       ORDER BY cTranNo
-
     ')
   `;
     try {
