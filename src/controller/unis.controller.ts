@@ -257,11 +257,11 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
         segment = structure === "3D" ? undefined : segment;
 
         let query =
-          "SELECT s.structure_id, s.structure_code, CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, COALESCE(ss.image,s.image) as image FROM hd_structure s JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id WHERE s.structure_code";
+          "SELECT s.structure_id, s.structure_code, CONCAT(ss.facing_no, ss.transformation, LPAD(ss.segment,2,'0')) as segment_code, COALESCE(ss.image,s.image) as image FROM hd_structure s LEFT JOIN hd_structure_segment ss ON ss.structure_id = s.structure_id AND ss.deleted = 0 WHERE s.structure_code";
 
         query += structure === "3D" ? " LIKE ?" : " = ?";
 
-        query = `SELECT image FROM (${query} AND ss.deleted = 0) A`;
+        query = `SELECT image FROM (${query}) A`;
 
         const params = [structure];
 
