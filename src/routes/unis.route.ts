@@ -17,4 +17,6 @@ router.get("/areas", UnisController.getAreas);
 
 router.get("/rentals", UnisController.getSiteRentals);
 
+router.get("/locations", UnisController.getUNISLocations);
+
 export const UnisRoute = router;

@@ -430,6 +430,44 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
     send(res).ok(response);
   },
 
+  async getUNISLocations(req: Request, res: Response) {
+    try {
+      const { division, city } = req.body;
+
+      // City selected -> get areas belonging to the city
+      if (city) {
+        const response = await db.select(
+          "SELECT area_id, area_code, area_name FROM hd_ad_area WHERE city_id = ? AND deleted = 0",
+          [city],
+        );
+
+        return res.status(200).json(response);
+      }
+
+      // Division selected -> get cities belonging to the division
+      if (division) {
+        const response = await db.select(
+          "SELECT city_id, city_code, city_name FROM hd_ad_city WHERE division_id = ? AND deleted = 0",
+          [division],
+        );
+
+        return res.status(200).json(response);
+      }
+
+      // Nothing selected -> return divisions
+      const response = await db.select(
+        `SELECT division_id, division_code, division_name FROM hd_ad_division`,
+      );
+
+      return res.status(200).json(response);
+    } catch (error) {
+      console.error("getLocations error:", error);
+
+      return res.status(500).json({
+        message: "Failed to retrieve locations",
+      });
+    }
+  },
   // JV MICROSITE RELATED
   async getRevenueOfJV(_: Request, res: Response) {
     const response = await db.select(
