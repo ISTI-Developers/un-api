@@ -466,6 +466,38 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
       });
     }
   },
+  async getAllAreas(req: Request, res: Response) {
+    try {
+      const response = await db.select(
+        "SELECT area_id, code, area FROM hd_ad_area WHERE deleted = 0",
+      );
+
+      return res.status(200).json(response);
+    } catch (error) {
+      console.error("getLocations error:", error);
+
+      return res.status(500).json({
+        message: "Failed to retrieve locations",
+      });
+    }
+  },
+  async getAllCities(req: Request, res: Response) {
+    try {
+   
+      const response = await db.select(
+        "SELECT city_id, city_code, city_name FROM hd_ad_city WHERE deleted = 0 AND city_id NOT IN (69)",
+        [req.query.division],
+      );
+
+      return res.status(200).json(response);
+    } catch (error) {
+      console.error("getLocations error:", error);
+
+      return res.status(500).json({
+        message: "Failed to retrieve locations",
+      });
+    }
+  },
   // JV MICROSITE RELATED
   async getRevenueOfJV(_: Request, res: Response) {
     const response = await db.select(
