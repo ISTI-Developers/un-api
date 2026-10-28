@@ -91,6 +91,85 @@ export const JVController = {
       send(res).error(error);
     }
   },
+
+
+  async getExpensesTest(req: Request, res: Response) {
+    try {
+      const readString = (value: unknown, name: string): string => {
+        if (value === undefined || value === null) {
+          return "";
+        }
+
+        if (typeof value !== "string") {
+          throw new Error(`${name} must be a single string.`);
+        }
+
+        return value.trim();
+      };
+
+      // Required date parameters.
+      const from = readString(req.query.from, "From");
+      const to = readString(req.query.to, "To");
+
+      // Optional filters: empty string means ALL.
+      const groupName = readString(
+        req.query.groupName,
+        "Group Name"
+      );
+
+      // Supports comma-separated location names.
+      const rawLocations = readString(
+        req.query.locations ?? req.query.location,
+        "Location"
+      );
+
+      if (!from || !to) {
+        throw new Error("From and To dates are required.");
+      }
+
+      // Normalize comma-separated locations.
+      // Empty string remains empty (ALL).
+      const locationParam = rawLocations
+        .split(",")
+        .map((location) => location.trim())
+        .filter(Boolean)
+        .join(",");
+
+      // Escape SQL string literals.
+      const sqlLiteral = (value: string): string =>
+        `'${value.replace(/'/g, "''")}'`;
+
+      // Build the remote UNAI SQL query.
+      const remoteQuery = `
+      SELECT *
+      FROM UN_LIVE.dbo.TFN_JV_EXPENSE_TEST(
+        ${sqlLiteral("002-00")},
+        ${sqlLiteral(from)},
+        ${sqlLiteral(to)},
+        ${sqlLiteral(groupName)},
+        ${sqlLiteral(locationParam)}
+      )
+    `;
+
+      // OPENQUERY requires the remote query as a SQL literal.
+      // Escape quotes again for the outer SQL statement.
+      const query = `
+      SELECT *
+      FROM OPENQUERY(
+        UNLIVE_LINK,
+        ${sqlLiteral(remoteQuery)}
+      )
+    `;
+
+      const result = await db.query(query);
+
+      return send(res).ok(result);
+    } catch (error) {
+      return send(res).error(error);
+    }
+  },
+
+
   async getExpensesCategory(req: Request, res: Response) {
     const query = `SELECT *
         FROM OPENQUERY(UNLIVE_LINK, '

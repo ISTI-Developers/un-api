@@ -8,6 +8,7 @@ router.get("/test", JVController.test);
 
 router.get("/expenses", JVController.getExpenses);
 router.get("/expenses/category", JVController.getExpensesCategory);
+router.get("/expenses-test", JVController.getExpensesTest);
 
 router.get("/revenue", JVController.getRevenue);
 router.get("/revenue/by-invoice", JVController.getRevenueByInvoice);
