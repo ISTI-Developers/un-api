@@ -93,81 +93,38 @@ export const JVController = {
   },
 
 
+
   async getExpensesTest(req: Request, res: Response) {
-    try {
-      const readString = (value: unknown, name: string): string => {
-        if (value === undefined || value === null) {
-          return "";
-        }
+    const escape = (value: unknown) =>
+      typeof value === "string"
+        ? value.trim().replace(/'/g, "''''")
+        : "";
 
-        if (typeof value !== "string") {
-          throw new Error(`${name} must be a single string.`);
-        }
+    const from = escape(req.query.from);
+    const to = escape(req.query.to);
+    const groupName = escape(req.query.groupName);
+    const locations = escape(req.query.locations);
 
-        return value.trim();
-      };
+    if (!from || !to) {
+      throw new Error("From and To dates are required.");
+    }
 
-      // Required date parameters.
-      const from = readString(req.query.from, "From");
-      const to = readString(req.query.to, "To");
-
-      // Optional filters: empty string means ALL.
-      const groupName = readString(
-        req.query.groupName,
-        "Group Name"
-      );
-
-      // Supports comma-separated location names.
-      const rawLocations = readString(
-        req.query.locations ?? req.query.location,
-        "Location"
-      );
-
-      if (!from || !to) {
-        throw new Error("From and To dates are required.");
-      }
-
-      // Normalize comma-separated locations.
-      // Empty string remains empty (ALL).
-      const locationParam = rawLocations
-        .split(",")
-        .map((location) => location.trim())
-        .filter(Boolean)
-        .join(",");
-
-      // Escape SQL string literals.
-      const sqlLiteral = (value: string): string =>
-        `'${value.replace(/'/g, "''")}'`;
-
-      // Build the remote UNAI SQL query.
-      const remoteQuery = `
+    const query = `SELECT *
+    FROM OPENQUERY(UNLIVE_LINK, '
       SELECT *
       FROM UN_LIVE.dbo.TFN_JV_EXPENSE_TEST(
-        ${sqlLiteral("002-00")},
-        ${sqlLiteral(from)},
-        ${sqlLiteral(to)},
-        ${sqlLiteral(groupName)},
-        ${sqlLiteral(locationParam)}
+        ''002-00'',''${from}'',''${to}'',''${groupName}'',''${locations}''
       )
-    `;
+    ')`;
 
-      // OPENQUERY requires the remote query as a SQL literal.
-      // Escape quotes again for the outer SQL statement.
-      const query = `
-      SELECT *
-      FROM OPENQUERY(
-        UNLIVE_LINK,
-        ${sqlLiteral(remoteQuery)}
-      )
-    `;
-
+    try {
       const result = await db.query(query);
-
-      return send(res).ok(result);
+      send(res).ok(result);
     } catch (error) {
-      return send(res).error(error);
+      send(res).error(error);
     }
   },
+
 
 
   async getExpensesCategory(req: Request, res: Response) {
