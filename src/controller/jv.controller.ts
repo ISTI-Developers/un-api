@@ -40,6 +40,38 @@ export const JVController = {
       send(res).error(error);
     }
   },
+
+  async getRevenueTest(req: Request, res: Response) {
+    const escape = (value: unknown) =>
+      typeof value === "string"
+        ? value.trim().replace(/'/g, "''''")
+        : "";
+
+    const from = escape(req.query.from);
+    const to = escape(req.query.to);
+    const groupName = escape(req.query.groupName);
+    const locations = escape(req.query.locations);
+
+    if (!from || !to) {
+      throw new Error("From and To dates are required.");
+    }
+
+    const query = `SELECT *
+    FROM OPENQUERY(UNLIVE_LINK, '
+      SELECT *
+      FROM UN_LIVE.dbo.TFN_JV_REVENUE_TEST(
+        ''002-00'',''${from}'',''${to}'',''${groupName}'',''${locations}''
+      )
+    ')`;
+
+    try {
+      const result = await db.query(query);
+      send(res).ok(result);
+    } catch (error) {
+      send(res).error(error);
+    }
+  },
+
   async refreshCollectionMemo(req: Request, res: Response) {
     const ref_id = String(req.query.ref_id ?? "").trim();
 

@@ -7,13 +7,15 @@ const router = express.Router();
 router.get("/test", JVController.test);
 
 router.get("/expenses", JVController.getExpenses);
-router.get("/expenses/category", JVController.getExpensesCategory);
 router.get("/expenses-test", JVController.getExpensesTest);
+router.get("/expenses/category", JVController.getExpensesCategory);
 
 router.get("/revenue", JVController.getRevenue);
+router.get("/revenue-test", JVController.getRevenueTest);
 router.get("/revenue/by-invoice", JVController.getRevenueByInvoice);
 router.get("/revenue/category", JVController.getRevenueCategory);
 router.get("/refreshCollectionMemo", JVController.refreshCollectionMemo);
+
 
 router.get("/getParentsGroupName", JVController.getParentsGroupName);
 router.get("/getChildGroupName", JVController.getChildGroupName);
