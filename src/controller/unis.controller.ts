@@ -432,23 +432,21 @@ WHERE s.product_division_id = 1 AND ss.transformed = 0 AND (s.status_id IN (1,2,
 
   async getUNISLocations(req: Request, res: Response) {
     try {
-      const { division, city } = req.body;
-
       // City selected -> get areas belonging to the city
-      if (city) {
+      if (req.query.city) {
         const response = await db.select(
-          "SELECT area_id, area_code, area_name FROM hd_ad_area WHERE city_id = ? AND deleted = 0",
-          [city],
+          "SELECT area_id, code, area FROM hd_ad_area WHERE city_id = ? AND deleted = 0",
+          [req.query.city],
         );
 
         return res.status(200).json(response);
       }
 
       // Division selected -> get cities belonging to the division
-      if (division) {
+      if (req.query.division) {
         const response = await db.select(
-          "SELECT city_id, city_code, city_name FROM hd_ad_city WHERE division_id = ? AND deleted = 0",
-          [division],
+          "SELECT city_id, city_code, city_name FROM hd_ad_city WHERE division_id = ? AND deleted = 0 AND city_id NOT IN (69)",
+          [req.query.division],
         );
 
         return res.status(200).json(response);
