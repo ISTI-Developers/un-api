@@ -41,6 +41,7 @@ export const JVController = {
     }
   },
 
+
   async getRevenueTest(req: Request, res: Response) {
     const escape = (value: unknown) =>
       typeof value === "string"
@@ -60,7 +61,12 @@ export const JVController = {
     FROM OPENQUERY(UNLIVE_LINK, '
       SELECT *
       FROM UN_LIVE.dbo.TFN_JV_REVENUE_TEST(
-        ''002-00'',''${from}'',''${to}'',''${groupName}'',''${locations}''
+        ''002-00'',
+        ''${from}'',
+        ''${to}'',
+        ''Sales Invoice'',
+        ''${groupName}'',
+        ''${locations}''
       )
     ')`;
 
@@ -71,6 +77,7 @@ export const JVController = {
       send(res).error(error);
     }
   },
+
 
   async refreshCollectionMemo(req: Request, res: Response) {
     const ref_id = String(req.query.ref_id ?? "").trim();
